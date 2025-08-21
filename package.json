@@ -13,9 +13,12 @@
     "format:staged": "prettier --write --staged"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
     "@tailwindcss/vite": "^4.1.12",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0",
     "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
