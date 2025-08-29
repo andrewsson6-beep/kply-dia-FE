@@ -6,6 +6,8 @@ import ForaneList from '../pages/ForaneList';
 import AddForane from '../pages/AddForane';
 import ParishList from '../pages/ParishList';
 import AddParish from '../pages/AddParish';
+import InstitutionList from '../pages/InstitutionList';
+import AddInstitution from '../pages/AddInstitution';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -27,6 +29,8 @@ const Layout = () => {
           <Route path="/forane/add" element={<AddForane />} />
           <Route path="/parish/list" element={<ParishList />} />
           <Route path="/parish/add" element={<AddParish />} />
+          <Route path="/institution/list" element={<InstitutionList />} />
+          <Route path="/institution/add" element={<AddInstitution />} />
         </Routes>
       </main>
     </div>
