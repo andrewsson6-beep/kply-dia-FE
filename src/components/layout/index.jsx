@@ -12,6 +12,7 @@ import FamilyList from '../pages/FamilyList';
 import AddFamily from '../pages/AddFamily';
 import CommunityList from '../pages/CommunityList';
 import OthersList from '../pages/OthersList';
+import UserProfile from '../pages/UserProfile';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -49,6 +50,7 @@ const Layout = () => {
           <Route path="/institution/list" element={<InstitutionList />} />
           <Route path="/institution/add" element={<AddInstitution />} />
           <Route path="/others" element={<OthersList />} />
+          <Route path="/user-profile" element={<UserProfile />} />
 
           <Route
             path="/parish/list/:parishId/community/list"
