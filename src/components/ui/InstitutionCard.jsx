@@ -1,6 +1,7 @@
 import React from 'react';
 
-const ChurchCard = ({
+// Renamed ChurchCard -> InstitutionCard for clarity/consistency
+const InstitutionCard = ({
   id,
   institutionName,
   place,
@@ -25,26 +26,24 @@ const ChurchCard = ({
 
   return (
     <div className={`overflow-hidden w-full ${className}`} style={cardStyle}>
-      <div className="flex flex-col sm:flex-row shadow-lg sm:shadow-none sm:items-center h-full p-3 sm:p-4 gap-1 sm:gap-0.5">
-        {/* Church Image */}
-        <div className="w-full h-[14.5625rem] rounded-2xl   sm:shadow-lg sm:w-2/5 md:w-1/3 relative flex-shrink-0">
-          <div className="h-full p-4">
-            <img
-              src={imageUrl}
-              alt={institutionName}
-              className="w-full h-full object-cover rounded"
-            />
-            {id && (
-              <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-blue-400 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-md">
-                {id}
-              </div>
-            )}
-          </div>
+      <div className="flex flex-col sm:flex-row shadow-lg sm:shadow-none sm:items-stretch h-full p-3 sm:p-4 gap-3">
+        {/* Image */}
+        <div className="w-full h-56 rounded-2xl sm:shadow-lg sm:w-2/5 md:w-1/3 relative flex-shrink-0 overflow-hidden">
+          <img
+            src={imageUrl}
+            alt={institutionName}
+            className="w-full h-full object-cover"
+          />
+          {id && (
+            <div className="absolute top-3 left-3 bg-blue-500/90 backdrop-blur text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold shadow">
+              {id}
+            </div>
+          )}
         </div>
 
-        {/* Church Details */}
-        <div className="flex-1 rounded-2xl shadow-lg p-4 overflow-hidden min-w-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 h-full border-2 border-blue-400 rounded-2xl p-2 bg-white bg-opacity-80">
+        {/* Details */}
+        <div className="flex-1 rounded-2xl shadow-lg p-4 overflow-hidden min-w-0 bg-white/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full border-2 border-blue-400 rounded-2xl p-3 bg-white/70">
             {/* Left Column */}
             <div className="space-y-2 flex flex-col ">
               <div className="flex-shrink-0">
@@ -161,7 +160,7 @@ const ChurchCard = ({
                 onClick={onVisit}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm mt-2"
               >
-                VISIT PARISH
+                VISIT INSTITUTION
               </button>
             </div>
           </div>
@@ -171,7 +170,7 @@ const ChurchCard = ({
   );
 };
 
-export default ChurchCard;
+export default InstitutionCard;
 
 // Example usage:
 /*

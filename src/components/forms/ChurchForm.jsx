@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ChurchForm = ({
   initialData = {},
@@ -24,6 +24,23 @@ const ChurchForm = ({
 
   const [imagePreview, setImagePreview] = useState(initialData.imageUrl || '');
   const [errors, setErrors] = useState({});
+
+  // Sync with new initialData in edit mode
+  useEffect(() => {
+    if (isEdit) {
+      setFormData(prev => ({
+        ...prev,
+        churchName: initialData.churchName || '',
+        place: initialData.place || '',
+        vicarName: initialData.vicarName || '',
+        contactNumber: initialData.contactNumber || '',
+        totalAmount: initialData.totalAmount || '',
+        image: initialData.image || null,
+        forane: initialData.forane || '',
+      }));
+      if (initialData.imageUrl) setImagePreview(initialData.imageUrl);
+    }
+  }, [initialData, isEdit]);
 
   const cardStyle = {
     ...(height !== 'auto' && { height }),
@@ -131,6 +148,19 @@ const ChurchForm = ({
   };
 
   const handleCancel = () => {
+    if (!isEdit) {
+      setFormData({
+        churchName: '',
+        place: '',
+        vicarName: '',
+        contactNumber: '',
+        totalAmount: '',
+        image: null,
+        forane: '',
+      });
+      setImagePreview('');
+      setErrors({});
+    }
     onCancel && onCancel();
   };
 

@@ -1,14 +1,14 @@
 import React from 'react';
 
-const ChurchCard = ({
+const FamilyCard = ({
   id,
-  churchName,
-  place,
-  vicarName,
+  familyName,
+  community,
+  familyHead,
   contactNumber,
   totalAmount,
-  imageUrl,
-  onVisitParish,
+  onEdit,
+  onDelete,
   height = 'auto',
   width = '100%',
   className = '',
@@ -19,40 +19,12 @@ const ChurchCard = ({
     minWidth: 0, // Allows flex items to shrink below their content size
   };
 
-  const handleKeyDown = e => {
-    if ((e.key === 'Enter' || e.key === ' ') && onVisitParish) {
-      e.preventDefault();
-      onVisitParish();
-    }
-  };
-
   return (
     <div
-      className={`bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full ${onVisitParish ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''} ${className}`}
+      className={`bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full ${className}`}
       style={cardStyle}
-      onClick={onVisitParish}
-      onKeyDown={handleKeyDown}
-      role={onVisitParish ? 'button' : undefined}
-      tabIndex={onVisitParish ? 0 : undefined}
-      aria-label={onVisitParish ? `Visit parish ${churchName}` : undefined}
     >
       <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-        {/* Church Image */}
-        <div className="w-full sm:w-2/5 md:w-1/3 relative flex-shrink-0">
-          <div className="h-32 sm:h-48 md:h-full min-h-[120px] sm:min-h-[200px]">
-            <img
-              src={imageUrl}
-              alt={churchName}
-              className="w-full h-full object-cover rounded"
-            />
-            {id && (
-              <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-blue-400 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-md">
-                {id}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Church Details */}
         <div className="flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 h-full">
@@ -60,19 +32,19 @@ const ChurchCard = ({
             <div className="space-y-2 flex flex-col">
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                  Church Name
+                  Family Name
                 </label>
                 <div className="bg-gray-100 rounded-md p-2 text-gray-800 font-medium text-xs sm:text-sm break-words overflow-hidden">
-                  {churchName}
+                  {familyName}
                 </div>
               </div>
 
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                  Place
+                  Family Head
                 </label>
                 <div className="bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm break-words overflow-hidden">
-                  {place}
+                  {familyHead}
                 </div>
               </div>
             </div>
@@ -81,10 +53,10 @@ const ChurchCard = ({
             <div className="space-y-2 flex flex-col">
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                  Vicar Name
+                  Community
                 </label>
                 <div className="bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm break-words overflow-hidden">
-                  {vicarName}
+                  {community}
                 </div>
               </div>
 
@@ -120,23 +92,35 @@ const ChurchCard = ({
               </div>
 
               {/* Mobile: Show button here (last item) */}
-              <div className="flex-shrink-0 sm:hidden">
+              <div className="flex-shrink-0 sm:hidden flex gap-2">
                 <button
-                  onClick={onVisitParish}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs cursor-pointer"
+                  onClick={onEdit}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
                 >
-                  VISIT PARISH
+                  EDIT
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
+                >
+                  DELETE
                 </button>
               </div>
             </div>
 
             {/* Desktop: Button spans full width at bottom */}
-            <div className="hidden sm:block sm:col-span-2">
+            <div className="hidden sm:flex sm:col-span-2 gap-2 mt-2">
               <button
-                onClick={onVisitParish}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm mt-2 cursor-pointer"
+                onClick={onEdit}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
               >
-                VISIT PARISH
+                EDIT
+              </button>
+              <button
+                onClick={onDelete}
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
+              >
+                DELETE
               </button>
             </div>
           </div>
@@ -146,11 +130,11 @@ const ChurchCard = ({
   );
 };
 
-export default ChurchCard;
+export default FamilyCard;
 
 // Example usage:
 /*
-import ChurchCard from './ChurchCard';
+import FamilyCard from './FamilyCard';
 
 const ExampleUsage = () => {
   const handleVisitParish = () => {
@@ -160,7 +144,7 @@ const ExampleUsage = () => {
 
   return (
     <div className="space-y-4 p-4">
-      <ChurchCard
+      <FamilyCard
         id={1}
         churchName="Our Lady of Dolours Church"
         place="Mundakkayam"
@@ -172,7 +156,7 @@ const ExampleUsage = () => {
         className="max-w-4xl mx-auto"
       />
       
-      <ChurchCard
+      <FamilyCard
         id={2}
         churchName="St. Mary's Cathedral"
         place="Kochi"
@@ -187,7 +171,7 @@ const ExampleUsage = () => {
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <ChurchCard
+        <FamilyCard
           id={3}
           churchName="Holy Cross Church"
           place="Thrissur"
