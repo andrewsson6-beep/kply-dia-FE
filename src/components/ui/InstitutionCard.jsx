@@ -14,6 +14,9 @@ const InstitutionCard = ({
   totalAmount,
   imageUrl,
   onVisit,
+  onAddContribution,
+  onEdit,
+  onDelete,
   height = 'auto',
   width = '100%',
   className = '',
@@ -154,14 +157,54 @@ const InstitutionCard = ({
               </div>
             </div>
 
-            {/* Desktop: Button spans full width at bottom */}
-            <div className="hidden sm:block sm:col-span-2">
+            {/* Desktop: Actions */}
+            <div className="hidden sm:flex sm:col-span-2 items-center justify-between gap-3 mt-2">
               <button
-                onClick={onVisit}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm mt-2"
+                onClick={() => onAddContribution && onAddContribution(id)}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md cursor-pointer transition-all duration-200 ease-out shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
               >
-                VISIT INSTITUTION
+                ADD CONTRIBUTION
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onEdit && onEdit(id)}
+                  className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  aria-label="Edit institution"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 00.707-.293l11.414-11.414a1 1 0 000-1.414L16.414 4.293a1 1 0 00-1.414 0L3.586 15.707A1 1 0 003.293 16.414V20z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => onDelete && onDelete(id)}
+                  className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  aria-label="Delete institution"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7h12z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
