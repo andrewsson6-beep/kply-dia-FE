@@ -23,7 +23,14 @@ export const menuItems = [
       { path: '/parish/add', label: 'Add Parish' },
     ],
   },
-  { path: '/institution', label: 'Institution', icon: FaRegListAlt },
+  {
+    label: 'Institution',
+    icon: FaRegListAlt,
+    submenu: [
+      { path: '/institution/list', label: 'Institution List' },
+      { path: '/institution/add', label: 'Add Institution' },
+    ],
+  },
   { path: '/others', label: 'Others', icon: VscSettings },
   { path: '/logout', label: 'Log out', icon: MdOutlineLogout },
 ];

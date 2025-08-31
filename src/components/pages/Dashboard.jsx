@@ -3,7 +3,7 @@ import Header from '../layout/Header';
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 min-h-full">
       <Header title="Dashboard" />
       <div className="p-6 mt-16">
         <div className="bg-white p-6 rounded-lg shadow-sm">
