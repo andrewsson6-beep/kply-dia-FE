@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Modal from './Modal';
+import { generateReceiptPdf } from '../../services/pdfHelper';
 
 /*
   IndividualCard
@@ -21,12 +23,37 @@ const IndividualCard = ({
   height = 'auto',
   width = '100%',
   className = '',
+  generatedBy,
 }) => {
   const style = {
     ...(height !== 'auto' && { height }),
     ...(width !== '100%' && { width }),
     minWidth: 0,
   };
+  const [open, setOpen] = useState(false);
+
+  const payload = () => ({
+    id,
+    title: individualName,
+    subtitleLabel: 'House Name',
+    subtitleValue: houseName,
+    fields: [
+      { label: 'Place', value: place },
+      { label: 'Contact', value: contactNumber },
+    ],
+    totalValue: totalAmount,
+    generatedBy,
+    generatedAt: new Date(),
+  });
+  const download = () => {
+    generateReceiptPdf(payload(), { mode: 'download' });
+    setOpen(false);
+  };
+  const print = () => {
+    generateReceiptPdf(payload(), { mode: 'print' });
+    setOpen(false);
+  };
+
   return (
     <div
       className={`bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full ${className}`}
@@ -138,6 +165,25 @@ const IndividualCard = ({
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={() => setOpen(true)}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
             {/* Desktop Actions */}
@@ -187,11 +233,67 @@ const IndividualCard = ({
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={() => setOpen(true)}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {open && (
+        <Modal
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          title="Receipt Actions"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={download}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={print}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Print Now
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            Choose how you want the receipt for{' '}
+            <span className="font-semibold text-gray-800">
+              {individualName}
+            </span>
+            .
+          </p>
+        </Modal>
+      )}
     </div>
   );
 };

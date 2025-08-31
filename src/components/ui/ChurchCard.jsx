@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Modal from './Modal';
+import { generateReceiptPdf } from '../../services/pdfHelper';
 
 const ChurchCard = ({
   id,
@@ -12,18 +14,42 @@ const ChurchCard = ({
   height = 'auto',
   width = '100%',
   className = '',
+  generatedBy,
+  forane, // optional new prop if available
 }) => {
   const cardStyle = {
     ...(height !== 'auto' && { height }),
     ...(width !== '100%' && { width }),
     minWidth: 0, // Allows flex items to shrink below their content size
   };
-
+  const [open, setOpen] = useState(false);
   const handleKeyDown = e => {
     if ((e.key === 'Enter' || e.key === ' ') && onVisitParish) {
       e.preventDefault();
       onVisitParish();
     }
+  };
+  const buildPayload = () => ({
+    id,
+    title: churchName,
+    subtitleLabel: 'Place',
+    subtitleValue: place,
+    fields: [
+      { label: 'Forane', value: forane || '-' },
+      { label: 'Vicar Name', value: vicarName },
+      { label: 'Vicar Contact', value: contactNumber },
+    ],
+    totalValue: totalAmount,
+    generatedBy,
+    generatedAt: new Date(),
+  });
+  const download = () => {
+    generateReceiptPdf(buildPayload(), { mode: 'download' });
+    setOpen(false);
+  };
+  const print = () => {
+    generateReceiptPdf(buildPayload(), { mode: 'print' });
+    setOpen(false);
   };
 
   return (
@@ -120,28 +146,112 @@ const ChurchCard = ({
               </div>
 
               {/* Mobile: Show button here (last item) */}
-              <div className="flex-shrink-0 sm:hidden">
+              <div className="flex-shrink-0 sm:hidden flex gap-2 mt-1">
                 <button
-                  onClick={onVisitParish}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs cursor-pointer"
+                  onClick={e => {
+                    e.stopPropagation();
+                    onVisitParish && onVisitParish();
+                  }}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-[10px] cursor-pointer"
                 >
                   VISIT PARISH
                 </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setOpen(true);
+                  }}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
-            </div>
 
-            {/* Desktop: Button spans full width at bottom */}
-            <div className="hidden sm:block sm:col-span-2">
-              <button
-                onClick={onVisitParish}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm mt-2 cursor-pointer"
-              >
-                VISIT PARISH
-              </button>
+              {/* Desktop: Button spans full width at bottom */}
+              <div className="hidden sm:flex sm:col-span-2 items-center gap-3 mt-2">
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onVisitParish && onVisitParish();
+                  }}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm cursor-pointer"
+                >
+                  VISIT PARISH
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setOpen(true);
+                  }}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+      {open && (
+        <Modal
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          title="Receipt Actions"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={download}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={print}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Print Now
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            Choose how you want the receipt for{' '}
+            <span className="font-semibold text-gray-800">{churchName}</span>.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 };

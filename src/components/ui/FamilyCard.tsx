@@ -1,4 +1,6 @@
 import React from 'react';
+import { generateFamilyReceiptPdf } from '../../services/pdfHelper';
+import Modal from './Modal';
 
 interface FamilyCardProps {
   id: number | string;
@@ -13,6 +15,8 @@ interface FamilyCardProps {
   height?: string;
   width?: string;
   className?: string;
+  // optional metadata for receipt
+  generatedBy?: string;
 }
 
 const FamilyCard: React.FC<FamilyCardProps> = ({
@@ -28,11 +32,37 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
   height = 'auto',
   width = '100%',
   className = '',
+  generatedBy,
 }) => {
   const cardStyle = {
     ...(height !== 'auto' && { height }),
     ...(width !== '100%' && { width }),
-    minWidth: 0, // Allows flex items to shrink below their content size
+    minWidth: 0,
+  };
+
+  const [receiptModalOpen, setReceiptModalOpen] = React.useState(false);
+  const openReceiptModal = () => setReceiptModalOpen(true);
+  const closeReceiptModal = () => setReceiptModalOpen(false);
+
+  const buildPayload = () => ({
+    id,
+    familyName,
+    community,
+    familyHead,
+    contactNumber,
+    totalAmount,
+    generatedBy,
+    generatedAt: new Date(),
+    parish: 'Mundakayam', //TODO: make it dynamic on API integration
+  });
+
+  const handleDownload = () => {
+    generateFamilyReceiptPdf(buildPayload(), { mode: 'download' });
+    closeReceiptModal();
+  };
+  const handlePrint = () => {
+    generateFamilyReceiptPdf(buildPayload(), { mode: 'print' });
+    closeReceiptModal();
   };
 
   return (
@@ -41,7 +71,6 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
       style={cardStyle}
     >
       <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-        {/* Church Details */}
         <div className="flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 h-full">
             {/* Left Column */}
@@ -54,7 +83,6 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                   {familyName}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Family Head
@@ -64,7 +92,6 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                 </div>
               </div>
             </div>
-
             {/* Right Column */}
             <div className="space-y-2 flex flex-col">
               <div className="flex-shrink-0">
@@ -75,7 +102,6 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                   {community}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Contact Number
@@ -84,8 +110,7 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                   {contactNumber}
                 </div>
               </div>
-
-              {/* Mobile: Show Total Amount here (second-to-last) */}
+              {/* Mobile Total */}
               <div className="flex-shrink-0 sm:hidden">
                 <label className="text-blue-500 font-medium text-xs mb-1 block">
                   Total Amount
@@ -94,8 +119,7 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                   {totalAmount}
                 </div>
               </div>
-
-              {/* Desktop: Show Total Amount here */}
+              {/* Desktop Total */}
               <div className="hidden sm:flex flex-1 items-end">
                 <div className="w-full">
                   <label className="text-blue-500 font-medium text-sm mb-1 block">
@@ -106,8 +130,7 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Mobile: Show button here (last item) */}
+              {/* Mobile action buttons */}
               <div className="flex-shrink-0 sm:hidden flex gap-2">
                 <button
                   onClick={() => onAddContribution(id)}
@@ -153,9 +176,27 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={openReceiptModal}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
-
             {/* Desktop actions */}
             <div className="hidden sm:flex sm:col-span-2 items-center justify-between gap-3 mt-2">
               <button
@@ -203,11 +244,76 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={openReceiptModal}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {receiptModalOpen && (
+        <Modal
+          isOpen={receiptModalOpen}
+          onClose={closeReceiptModal}
+          title="Receipt Actions"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleDownload}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow hover:shadow-md transition-all cursor-pointer"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow hover:shadow-md transition-all cursor-pointer"
+              >
+                Print Now
+              </button>
+              <button
+                onClick={closeReceiptModal}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-3 text-sm text-gray-600">
+            <p>
+              Choose how you want to obtain the receipt for{' '}
+              <span className="font-semibold text-gray-800">{familyName}</span>.
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <span className="font-medium text-gray-700">Download PDF</span>{' '}
+                saves the file locally.
+              </li>
+              <li>
+                <span className="font-medium text-gray-700">Print Now</span>{' '}
+                opens system print dialog directly.
+              </li>
+            </ul>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

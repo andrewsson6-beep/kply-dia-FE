@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Modal from './Modal';
+import { generateReceiptPdf } from '../../services/pdfHelper';
 
 // Renamed ChurchCard -> InstitutionCard for clarity/consistency
 const InstitutionCard = ({
@@ -13,18 +15,49 @@ const InstitutionCard = ({
   administratorContact,
   totalAmount,
   imageUrl,
-  onVisit,
   onAddContribution,
   onEdit,
   onDelete,
   height = 'auto',
   width = '100%',
   className = '',
+  generatedBy,
 }) => {
   const cardStyle = {
     ...(height !== 'auto' && { height }),
     ...(width !== '100%' && { width }),
-    minWidth: 0, // Allows flex items to shrink below their content size
+    minWidth: 0,
+  };
+  const [open, setOpen] = useState(false);
+
+  const payload = () => ({
+    id,
+    title: institutionName,
+    subtitleLabel: 'Place',
+    subtitleValue: place,
+    fields: [
+      {
+        label: 'Manager / Administrator',
+        value: managerName || administratorName || '-',
+      },
+      { label: 'Manager Contact', value: managerContact || '-' },
+      { label: 'Principal Name', value: principalName || '-' },
+      { label: 'Principal Contact', value: principalContact || '-' },
+      { label: 'Administrator Name', value: administratorName || '-' },
+      { label: 'Administrator Contact', value: administratorContact || '-' },
+    ],
+    totalValue: totalAmount,
+    generatedBy,
+    generatedAt: new Date(),
+  });
+
+  const download = () => {
+    generateReceiptPdf(payload(), { mode: 'download' });
+    setOpen(false);
+  };
+  const print = () => {
+    generateReceiptPdf(payload(), { mode: 'print' });
+    setOpen(false);
   };
 
   return (
@@ -43,7 +76,6 @@ const InstitutionCard = ({
             </div>
           )}
         </div>
-
         {/* Details */}
         <div className="flex-1 rounded-2xl shadow-lg p-4 overflow-hidden min-w-0 bg-white/80">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full border-2 border-blue-400 rounded-2xl p-3 bg-white/70">
@@ -57,7 +89,6 @@ const InstitutionCard = ({
                   {institutionName}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Manager Name
@@ -66,7 +97,6 @@ const InstitutionCard = ({
                   {managerName}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Principal Name
@@ -75,7 +105,6 @@ const InstitutionCard = ({
                   {principalName}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Administrator Name
@@ -85,7 +114,6 @@ const InstitutionCard = ({
                 </div>
               </div>
             </div>
-
             {/* Right Column */}
             <div className="space-y-2 flex flex-col  ">
               <div className="flex-shrink-0">
@@ -96,7 +124,6 @@ const InstitutionCard = ({
                   {place}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Manager Contact Number
@@ -105,7 +132,6 @@ const InstitutionCard = ({
                   {managerContact}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Principal Contact Number
@@ -114,7 +140,6 @@ const InstitutionCard = ({
                   {principalContact}
                 </div>
               </div>
-
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                   Administrator Contact Number
@@ -123,8 +148,6 @@ const InstitutionCard = ({
                   {administratorContact}
                 </div>
               </div>
-
-              {/* Mobile: Show Total Amount here (second-to-last) */}
               <div className="flex-shrink-0 sm:hidden">
                 <label className="text-blue-500 font-medium text-xs mb-1 block">
                   Total Amount
@@ -133,8 +156,6 @@ const InstitutionCard = ({
                   {totalAmount}
                 </div>
               </div>
-
-              {/* Desktop: Show Total Amount here */}
               <div className="hidden sm:flex flex-1 items-end">
                 <div className="w-full">
                   <label className="text-blue-500 font-medium text-sm mb-1 block">
@@ -145,18 +166,15 @@ const InstitutionCard = ({
                   </div>
                 </div>
               </div>
-
-              {/* Mobile: Show button here (last item) */}
-              <div className="flex-shrink-0 sm:hidden">
+              <div className="flex-shrink-0 sm:hidden mt-1 flex gap-2">
                 <button
-                  onClick={onVisit}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
+                  onClick={() => setOpen(true)}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded-md cursor-pointer transition-all text-[10px] shadow hover:shadow-lg"
                 >
-                  VISIT INSTITUTION
+                  RECEIPT
                 </button>
               </div>
             </div>
-
             {/* Desktop: Actions */}
             <div className="hidden sm:flex sm:col-span-2 items-center justify-between gap-3 mt-2">
               <button
@@ -204,11 +222,67 @@ const InstitutionCard = ({
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={() => setOpen(true)}
+                  className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Receipt options"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 9V4h12v5M6 14h12v6H6v-6z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {open && (
+        <Modal
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          title="Receipt Actions"
+          footer={
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={download}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={print}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow transition-all"
+              >
+                Print Now
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            Choose how you want the receipt for{' '}
+            <span className="font-semibold text-gray-800">
+              {institutionName}
+            </span>
+            .
+          </p>
+        </Modal>
+      )}
     </div>
   );
 };
