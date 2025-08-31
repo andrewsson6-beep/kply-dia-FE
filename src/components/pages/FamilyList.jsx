@@ -3,6 +3,7 @@ import FamilyCard from '../ui/FamilyCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import FamilyForm from '../forms/FamilyForm';
+import ContributionForm from '../forms/ContributionForm';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -43,20 +44,15 @@ function FamilyList() {
   ];
 
   const [contributionFor, setContributionFor] = useState(null); // family id | null
-  const [contributionAmount, setContributionAmount] = useState('');
   const [editingFamily, setEditingFamily] = useState(null); // family object | null
   const [deletingFamily, setDeletingFamily] = useState(null); // family object | null
 
   const handleAddContribution = id => {
     setContributionFor(id);
-    setContributionAmount('');
   };
 
-  const handleSubmitContribution = () => {
-    console.log('Submit contribution', {
-      familyId: contributionFor,
-      amount: contributionAmount,
-    });
+  const handleSubmitContribution = data => {
+    console.log('Submit contribution', data);
     // TODO: integrate API call
     setContributionFor(null);
   };
@@ -128,37 +124,14 @@ function FamilyList() {
         size="sm"
         variant="side"
         contentPointer
-        footer={
-          <>
-            <button
-              onClick={() => setContributionFor(null)}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmitContribution}
-              disabled={!contributionAmount.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              Add
-            </button>
-          </>
-        }
       >
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Amount
-            <input
-              type="number"
-              value={contributionAmount}
-              onChange={e => setContributionAmount(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 text-sm"
-              placeholder="Enter amount"
-              min={0}
-            />
-          </label>
-        </div>
+        {contributionFor !== null && (
+          <ContributionForm
+            familyId={contributionFor}
+            onSubmit={data => handleSubmitContribution(data)}
+            onCancel={() => setContributionFor(null)}
+          />
+        )}
       </Modal>
 
       {/* Edit Modal (Family Form) */}

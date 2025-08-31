@@ -3,6 +3,7 @@ import Header from '../layout/Header';
 import IndividualCard from '../ui/IndividualCard';
 import Modal from '../ui/Modal';
 import IndividualForm from '../forms/IndividualForm';
+import ContributionForm from '../forms/ContributionForm';
 
 const OthersList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -30,7 +31,6 @@ const OthersList = () => {
   const [editingIndividual, setEditingIndividual] = useState(null);
   const [deletingIndividual, setDeletingIndividual] = useState(null);
   const [contributionFor, setContributionFor] = useState(null); // id
-  const [contributionAmount, setContributionAmount] = useState('');
 
   // Filtering by selectedLetter (if implemented in Header) - placeholder
   const filtered = individuals.filter(i =>
@@ -41,18 +41,20 @@ const OthersList = () => {
 
   const openAddContribution = id => {
     setContributionFor(id);
-    setContributionAmount('');
   };
 
-  const submitContribution = () => {
-    if (!contributionFor || !contributionAmount.trim()) return;
-    // (placeholder) update totalAmount by adding numeric amount
+  const submitContribution = data => {
+    // data: { familyId, amount, notes, year }
+    if (!data || !data.amount) {
+      setContributionFor(null);
+      return;
+    }
     setIndividuals(prev =>
       prev.map(i => {
         if (i.id === contributionFor) {
           const existing =
             parseInt(String(i.totalAmount).replace(/\D/g, ''), 10) || 0;
-          const add = parseInt(contributionAmount, 10) || 0;
+          const add = Number(data.amount) || 0;
           return {
             ...i,
             totalAmount:
@@ -62,6 +64,7 @@ const OthersList = () => {
         return i;
       })
     );
+    console.log('Added contribution (individual)', data);
     setContributionFor(null);
   };
 
@@ -188,37 +191,14 @@ const OthersList = () => {
         size="sm"
         variant="side"
         contentPointer
-        footer={
-          <>
-            <button
-              onClick={() => setContributionFor(null)}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={submitContribution}
-              disabled={!contributionAmount.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              Add
-            </button>
-          </>
-        }
       >
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Amount
-            <input
-              type="number"
-              value={contributionAmount}
-              onChange={e => setContributionAmount(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 text-sm"
-              placeholder="Enter amount"
-              min={0}
-            />
-          </label>
-        </div>
+        {contributionFor !== null && (
+          <ContributionForm
+            familyId={contributionFor} // reuse prop name
+            onSubmit={submitContribution}
+            onCancel={() => setContributionFor(null)}
+          />
+        )}
       </Modal>
 
       {/* Delete Confirmation Center Modal */}

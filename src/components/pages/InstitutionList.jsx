@@ -3,6 +3,7 @@ import InstitutionCard from '../ui/InstitutionCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import InstitutionForm from '../forms/InstitutionForm';
+import ContributionForm from '../forms/ContributionForm';
 
 function InstitutionList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -39,7 +40,6 @@ function InstitutionList() {
 
   // Modal states
   const [contributionFor, setContributionFor] = useState(null); // id
-  const [contributionAmount, setContributionAmount] = useState('');
   const [editingInstitution, setEditingInstitution] = useState(null); // object
   const [deletingInstitution, setDeletingInstitution] = useState(null); // object
 
@@ -50,13 +50,9 @@ function InstitutionList() {
   // Contribution flow
   const openAddContribution = id => {
     setContributionFor(id);
-    setContributionAmount('');
   };
-  const submitContribution = () => {
-    console.log('Add contribution', {
-      id: contributionFor,
-      amount: contributionAmount,
-    });
+  const submitContribution = data => {
+    console.log('Add contribution', data); // { familyId|institutionId? , amount, notes, year }
     // TODO: integrate API
     setContributionFor(null);
   };
@@ -123,37 +119,14 @@ function InstitutionList() {
         size="sm"
         variant="side"
         contentPointer
-        footer={
-          <>
-            <button
-              onClick={() => setContributionFor(null)}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={submitContribution}
-              disabled={!contributionAmount.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              Add
-            </button>
-          </>
-        }
       >
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Amount
-            <input
-              type="number"
-              value={contributionAmount}
-              onChange={e => setContributionAmount(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 text-sm"
-              placeholder="Enter amount"
-              min={0}
-            />
-          </label>
-        </div>
+        {contributionFor !== null && (
+          <ContributionForm
+            familyId={contributionFor} // reuse prop name
+            onSubmit={submitContribution}
+            onCancel={() => setContributionFor(null)}
+          />
+        )}
       </Modal>
 
       {/* Edit Side Modal */}

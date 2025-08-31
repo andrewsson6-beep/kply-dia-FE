@@ -62,8 +62,8 @@ const Modal = ({
       <div
         className={[
           centered
-            ? `w-full ${sizeClasses[size]} mx-auto max-h-full bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col`
-            : `h-full w-full sm:w-[420px] md:w-[520px] bg-white shadow-xl border-l border-gray-200 flex flex-col transform transition-transform duration-300 ease-out ${mounted ? 'translate-x-0' : 'translate-x-full'}`,
+            ? `relative z-10 w-full ${sizeClasses[size]} mx-auto max-h-full bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col`
+            : `relative z-10 h-full w-full sm:w-[420px] md:w-[520px] bg-white shadow-xl border-l border-gray-200 flex flex-col transform transition-transform duration-300 ease-out ${mounted ? 'translate-x-0' : 'translate-x-full'}`,
         ].join(' ')}
       >
         <div
@@ -111,7 +111,7 @@ const Modal = ({
         <button
           aria-hidden="true"
           tabIndex={-1}
-          className="absolute inset-0 w-full h-full cursor-default"
+          className="absolute inset-0 w-full h-full cursor-default z-0"
           onClick={e => {
             if (e.target === e.currentTarget) onClose();
           }}
