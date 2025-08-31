@@ -6,6 +6,13 @@ import ForaneList from '../pages/ForaneList';
 import AddForane from '../pages/AddForane';
 import ParishList from '../pages/ParishList';
 import AddParish from '../pages/AddParish';
+import InstitutionList from '../pages/InstitutionList';
+import AddInstitution from '../pages/AddInstitution';
+import FamilyList from '../pages/FamilyList';
+import AddFamily from '../pages/AddFamily';
+import CommunityList from '../pages/CommunityList';
+import OthersList from '../pages/OthersList';
+import UserProfile from '../pages/UserProfile';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -15,11 +22,24 @@ const Layout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <SideBar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <main
-        className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'lg:ml-0' : ''}`}
-      >
+
+      {/* Mobile toggle (hamburger) button */}
+      {!sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Open sidebar menu"
+          onClick={toggleSidebar}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white border border-gray-200 shadow hover:bg-gray-50 active:scale-95 transition"
+        >
+          <span className="block w-5 h-[2px] bg-gray-700 mb-1" />
+          <span className="block w-5 h-[2px] bg-gray-700 mb-1" />
+          <span className="block w-5 h-[2px] bg-gray-700" />
+        </button>
+      )}
+
+      <main className={`flex-1 overflow-y-auto transition-all duration-300`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -27,6 +47,23 @@ const Layout = () => {
           <Route path="/forane/add" element={<AddForane />} />
           <Route path="/parish/list" element={<ParishList />} />
           <Route path="/parish/add" element={<AddParish />} />
+          <Route path="/institution/list" element={<InstitutionList />} />
+          <Route path="/institution/add" element={<AddInstitution />} />
+          <Route path="/others" element={<OthersList />} />
+          <Route path="/user-profile" element={<UserProfile />} />
+
+          <Route
+            path="/parish/list/:parishId/community/list"
+            element={<CommunityList />}
+          />
+          <Route
+            path="/parish/list/:parishId/community/:communityId/visit"
+            element={<FamilyList />}
+          />
+          <Route
+            path="/parish/list/:parishId/community/:communityId/family/add"
+            element={<AddFamily />}
+          />
         </Routes>
       </main>
     </div>
