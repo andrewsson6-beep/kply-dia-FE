@@ -4,9 +4,11 @@ import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import InstitutionForm from '../forms/InstitutionForm';
 import ContributionForm from '../forms/ContributionForm';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 function InstitutionList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const headerOffset = useHeaderOffset();
 
   // Local sample data (would come from API)
   const [institutions, setInstitutions] = useState([
@@ -86,7 +88,7 @@ function InstitutionList() {
   };
 
   return (
-    <>
+    <div style={{ paddingTop: headerOffset }}>
       <Header
         selectedLetter={selectedLetter}
         onSelect={ltr => {
@@ -95,7 +97,8 @@ function InstitutionList() {
         }}
       />
       {/* Content wrapper: add enough top padding to clear fixed header height */}
-      <div className="max-w-7xl mx-auto px-4 pt-32 space-y-10">
+      {/* Header offset handled by outer wrapper padding */}
+      <div className="max-w-7xl mx-auto px-4 space-y-10">
         <div className="grid grid-cols-1 gap-8">
           {institutions.map(i => (
             <InstitutionCard
@@ -184,7 +187,7 @@ function InstitutionList() {
           </button>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }
 

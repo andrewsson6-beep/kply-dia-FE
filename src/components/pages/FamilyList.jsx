@@ -4,9 +4,11 @@ import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import FamilyForm from '../forms/FamilyForm';
 import ContributionForm from '../forms/ContributionForm';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const headerOffset = useHeaderOffset();
 
   const [families, setFamilies] = useState([
     {
@@ -114,7 +116,7 @@ function FamilyList() {
   );
 
   return (
-    <div>
+    <div style={{ paddingTop: headerOffset }}>
       <Header
         selectedLetter={selectedLetter}
         onSelect={ltr => {
@@ -123,7 +125,8 @@ function FamilyList() {
         }}
       />
 
-      <div className="p-4 md:p-6 mt-16">
+      {/* Header offset handled by parent padding; remove mt-16 */}
+      <div className="p-4 md:p-6">
         {filteredFamilies.length > 0 && (
           <div className="flex items-center justify-between mb-4">
             <button

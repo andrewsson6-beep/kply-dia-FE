@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import ChurchCard from '../ui/ChurchCard';
 import Header from '../layout/Header';
 import { useNavigate } from 'react-router-dom';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const navigate = useNavigate();
+  const headerOffset = useHeaderOffset();
 
   const churches = useMemo(
     () => [
@@ -56,7 +58,7 @@ const ForaneList = () => {
   };
 
   return (
-    <div className="pt-28 p-6">
+    <div className="p-4 sm:p-6" style={{ paddingTop: headerOffset }}>
       <Header
         selectedLetter={selectedLetter}
         onSelect={ltr => {
@@ -80,7 +82,7 @@ const ForaneList = () => {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-6 mt-2">
         {filtered.map(c => (
           <ChurchCard
             key={c.id}

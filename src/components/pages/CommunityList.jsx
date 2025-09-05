@@ -4,9 +4,11 @@ import CommunityCard from '../ui/CommunityCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import CommunityForm from '../forms/CommunityForm';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const headerOffset = useHeaderOffset();
 
   const navigate = useNavigate();
 
@@ -54,7 +56,10 @@ const CommunityList = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-full p-4">
+    <div
+      className="bg-gray-100 min-h-full p-4"
+      style={{ paddingTop: headerOffset }}
+    >
       <Header
         selectedLetter={selectedLetter}
         onSelect={ltr => {
@@ -63,7 +68,8 @@ const CommunityList = () => {
         }}
       />
 
-      <div className="max-w-7xl mx-auto mt-20">
+      {/* Removed hard-coded mt-20; header offset handled by container padding */}
+      <div className="max-w-7xl mx-auto">
         {/* Top bar with back + add button when list non-empty */}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between mb-4">

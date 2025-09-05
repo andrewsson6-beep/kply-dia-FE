@@ -64,7 +64,10 @@ const Header = ({ onSelect, selectedLetter: controlledLetter }) => {
     }
   }, [showAlphabet, effectiveSelected]);
   return (
-    <header className="header bg-gray-100/95 backdrop-blur shadow-sm border-b border-gray-200 flex flex-wrap items-start justify-between gap-3 px-4 sm:px-6 pt-2 pb-3 fixed top-0 left-0 lg:left-64 right-0 z-40 transition-[left,width] duration-300">
+    <header
+      id="app-header"
+      className="header bg-gray-100/95 backdrop-blur shadow-sm border-b border-gray-200 flex flex-wrap items-start justify-between gap-3 px-4 sm:px-6 pt-2 pb-3 fixed top-0 left-0 lg:left-64 right-0 z-40 transition-[left,width] duration-300"
+    >
       {showAlphabet && (
         <div className="w-full order-1 flex justify-end pl-12 sm:pl-0">
           <div className="max-w-full">

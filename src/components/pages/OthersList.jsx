@@ -4,9 +4,11 @@ import IndividualCard from '../ui/IndividualCard';
 import Modal from '../ui/Modal';
 import IndividualForm from '../forms/IndividualForm';
 import ContributionForm from '../forms/ContributionForm';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 const OthersList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const headerOffset = useHeaderOffset();
   const [individuals, setIndividuals] = useState([
     {
       id: 1,
@@ -104,13 +106,14 @@ const OthersList = () => {
   };
 
   return (
-    <div>
+    <div style={{ paddingTop: headerOffset }}>
       <Header
         selectedLetter={selectedLetter}
         onSelect={ltr => setSelectedLetter(ltr)}
       />
 
-      <div className="p-4 md:p-6 mt-16">
+      {/* Header offset handled by parent padding; remove mt-16 */}
+      <div className="p-4 md:p-6">
         {filtered.length > 0 && (
           <div className="flex items-center justify-between mb-4">
             <button

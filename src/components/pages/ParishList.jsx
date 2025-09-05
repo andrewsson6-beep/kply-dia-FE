@@ -2,16 +2,18 @@ import React from 'react';
 import ChurchCard from '../ui/ChurchCard';
 import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
+import useHeaderOffset from '../../hooks/useHeaderOffset';
 
 const ParishList = () => {
   const navigate = useNavigate();
+  const headerOffset = useHeaderOffset();
 
   const handleVisitParish = parishId => {
     navigate(`/parish/list/${parishId}/community/list`);
   };
 
   return (
-    <div className="pt-28 p-6">
+    <div className="p-4 sm:p-6" style={{ paddingTop: headerOffset }}>
       <Header onSelect={letter => console.log('Selected letter:', letter)} />
 
       <div className="space-y-6">
