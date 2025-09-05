@@ -2,7 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 // Import SVG logo (was incorrectly pointing to a non-existent PNG and using named import)
 import mmtlogo from '../../assets/images/mmtlogo.svg';
 
-const Header = ({ onSelect, selectedLetter: controlledLetter }) => {
+const Header = ({
+  onSelect,
+  selectedLetter: controlledLetter,
+  showFilter = false,
+  headerInfo,
+}) => {
   const [showAlphabet, setShowAlphabet] = useState(false);
   const [uncontrolledLetter, setUncontrolledLetter] = useState(null);
   const alphaContainerRef = useRef(null);
@@ -107,33 +112,35 @@ const Header = ({ onSelect, selectedLetter: controlledLetter }) => {
         </div>
         <div className="order-2 flex-1 text-center min-w-[160px]">
           <div className="text-base sm:text-xl font-bold text-blue-600 leading-tight truncate px-2">
-            PARISH LIST
+            {headerInfo?.title || 'Header Title'}
           </div>
           <div className="text-xs sm:text-sm text-gray-600 truncate px-2">
-            FORANE : MUNDAKKAYAM
+            {headerInfo?.subtitle || 'Subtitle or additional info'}
           </div>
         </div>
         <div className="flex items-center space-x-3 ml-auto relative order-3">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowAlphabet(s => !s)}
-              aria-expanded={showAlphabet}
-              aria-controls="alphabet-bar"
-              className={`relative text-xs rounded-full px-3 py-1 font-medium tracking-wide transition-colors shadow-sm border ${
-                showAlphabet
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : effectiveSelected
-                    ? 'bg-white border-blue-600 text-blue-600 hover:bg-blue-50'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              A–Z
-              {showAlphabet && (
-                <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-blue-600" />
-              )}
-            </button>
-          </div>
+          {showFilter && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowAlphabet(s => !s)}
+                aria-expanded={showAlphabet}
+                aria-controls="alphabet-bar"
+                className={`relative text-xs rounded-full px-3 py-1 font-medium tracking-wide transition-colors shadow-sm border ${
+                  showAlphabet
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : effectiveSelected
+                      ? 'bg-white border-blue-600 text-blue-600 hover:bg-blue-50'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                A–Z
+                {showAlphabet && (
+                  <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-blue-600" />
+                )}
+              </button>
+            </div>
+          )}
           <div className="relative w-40 sm:w-56 md:w-64 border border-blue-400 rounded-md">
             <input
               type="text"

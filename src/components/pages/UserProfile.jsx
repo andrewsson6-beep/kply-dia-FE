@@ -1,24 +1,11 @@
 import React, { useState, useRef } from 'react';
 
-const fallbackAvatar = name => {
-  const initials = (name || 'U N')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(p => p[0].toUpperCase())
-    .join('');
-  return `https://ui-avatars.com/api/?background=6366f1&color=fff&size=256&name=${encodeURIComponent(
-    initials
-  )}`;
-};
-
 const UserProfile = () => {
   // Generic placeholder user data (no Redux yet)
   const baseUser = {
     name: 'Jane Doe',
     email: 'jane.doe@example.com',
     role: 'admin',
-    avatar: 'https://i.pravatar.cc/150?img=5',
     createdAt: new Date('2024-01-12'),
     lastLoginAt: new Date(),
   };
@@ -27,21 +14,18 @@ const UserProfile = () => {
     name: baseUser.name,
     email: baseUser.email,
     role: baseUser.role,
-    avatar: baseUser.avatar,
   }));
   const [original, setOriginal] = useState(() => ({
     name: baseUser.name,
     email: baseUser.email,
     role: baseUser.role,
-    avatar: baseUser.avatar,
   }));
-  const [avatarPreview, setAvatarPreview] = useState(baseUser.avatar);
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwErrors, setPwErrors] = useState(null);
   const [saving, setSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [globalMsg, setGlobalMsg] = useState(null);
-  const fileInputRef = useRef(null);
+  // Avatar ref removed (no profile image management required)
   const nameInputRef = useRef(null);
   const [highlightName, setHighlightName] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -76,27 +60,7 @@ const UserProfile = () => {
     return true;
   };
 
-  const handleAvatarSelect = e => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be under 2MB');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = ev => {
-      setAvatarPreview(ev.target.result);
-      handleChange('avatar', ev.target.result); // In real app upload & store URL
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAvatarRemove = () => {
-    setAvatarPreview('');
-    handleChange('avatar', '');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+  // Avatar management removed per requirement (no profile image)
 
   const handleSave = e => {
     if (e) e.preventDefault();
@@ -109,7 +73,6 @@ const UserProfile = () => {
         name: form.name,
         email: form.email,
         role: form.role,
-        avatar: form.avatar,
       });
       setTimeout(() => setGlobalMsg(null), 2500);
     }, 600);
@@ -152,41 +115,9 @@ const UserProfile = () => {
           {/* Left Column */}
           <div className="w-full lg:w-1/3 space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden">
-              <div className="absolute -top-8 -right-8 w-32 h-32 bg-indigo-100 rounded-full opacity-40" />
+              <div className="absolute -top-8 -right-8 w-32 h-32 bg-indigo-100 rounded-full opacity-30" />
               <div className="relative flex flex-col items-center text-center">
-                <div className="relative">
-                  <img
-                    src={
-                      avatarPreview || form.avatar || fallbackAvatar(form.name)
-                    }
-                    alt={form.name || 'User avatar'}
-                    className="w-32 h-32 rounded-full ring-4 ring-white object-cover shadow-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-1 right-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2 py-1 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Change
-                  </button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarSelect}
-                  className="hidden"
-                />
-                {avatarPreview || form.avatar ? (
-                  <button
-                    type="button"
-                    onClick={handleAvatarRemove}
-                    className="mt-2 text-xs text-red-600 hover:text-red-500"
-                  >
-                    Remove avatar
-                  </button>
-                ) : null}
-                <div className="mt-4 flex items-center gap-2 flex-wrap justify-center">
+                <div className="mt-2 flex items-center gap-2 flex-wrap justify-center">
                   <h2 className="text-lg font-semibold text-gray-900 max-w-full break-words">
                     {form.name}
                   </h2>
@@ -208,8 +139,7 @@ const UserProfile = () => {
                         <path d="M11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z" />
                       </svg>
                     </button>
-                    {(form.name !== original.name ||
-                      form.avatar !== original.avatar) && (
+                    {form.name !== original.name && (
                       <>
                         <button
                           type="button"
@@ -222,7 +152,6 @@ const UserProfile = () => {
                           type="button"
                           onClick={() => {
                             setForm(original);
-                            setAvatarPreview(original.avatar);
                           }}
                           className="px-2 py-1 text-[10px] font-medium rounded-md border border-gray-200 hover:bg-gray-50"
                         >
@@ -355,21 +284,14 @@ const UserProfile = () => {
                 <div className="flex gap-2">
                   <button
                     type="reset"
-                    onClick={() => {
-                      setForm(original);
-                      setAvatarPreview(original.avatar);
-                    }}
+                    onClick={() => setForm(original)}
                     className="px-3 py-2 text-xs font-medium rounded-md border border-gray-200 hover:bg-gray-50 active:scale-95 transition"
                   >
                     Reset
                   </button>
                   <button
                     type="submit"
-                    disabled={
-                      saving ||
-                      (form.name === original.name &&
-                        form.avatar === original.avatar)
-                    }
+                    disabled={saving || form.name === original.name}
                     className="px-4 py-2 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
