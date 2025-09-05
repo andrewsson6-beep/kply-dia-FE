@@ -8,7 +8,7 @@ import ContributionForm from '../forms/ContributionForm';
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
 
-  const families = [
+  const [families, setFamilies] = useState([
     {
       id: 1,
       familyName: 'The Johnsons',
@@ -41,11 +41,15 @@ function FamilyList() {
       contactNumber: '444-222-1111',
       totalAmount: 'Rs. 71,920',
     },
-  ];
+  ]);
 
   const [contributionFor, setContributionFor] = useState(null); // family id | null
   const [editingFamily, setEditingFamily] = useState(null); // family object | null
   const [deletingFamily, setDeletingFamily] = useState(null); // family object | null
+  const [showAdd, setShowAdd] = useState(false); // add family drawer
+  const communityOptions = Array.from(
+    new Set(families.map(f => f.community).filter(Boolean))
+  );
 
   const handleAddContribution = id => {
     setContributionFor(id);
@@ -63,8 +67,9 @@ function FamilyList() {
   };
 
   const submitEdit = data => {
-    console.log('Update family', data);
-    // TODO: integrate API call / state update
+    setFamilies(prev =>
+      prev.map(f => (f.id === data.id ? { ...f, ...data } : f))
+    );
     setEditingFamily(null);
   };
 
@@ -75,11 +80,38 @@ function FamilyList() {
 
   const confirmDelete = () => {
     if (deletingFamily) {
-      console.log('Delete family', deletingFamily.id);
-      // TODO: integrate deletion
+      setFamilies(prev => prev.filter(f => f.id !== deletingFamily.id));
     }
     setDeletingFamily(null);
   };
+
+  const submitAdd = data => {
+    setFamilies(prev => {
+      const nextId = prev.length ? Math.max(...prev.map(f => f.id)) + 1 : 1;
+      const ensureAmount = data.totalAmount?.toString().trim()
+        ? data.totalAmount
+        : 'Rs. 0';
+      return [
+        ...prev,
+        {
+          id: nextId,
+          familyName: data.familyName,
+          community: data.community,
+          familyHead: data.familyHead,
+          contactNumber: data.contactNumber,
+          totalAmount: ensureAmount,
+        },
+      ];
+    });
+    setShowAdd(false);
+  };
+
+  // Filter by selected letter (familyName)
+  const filteredFamilies = families.filter(f =>
+    selectedLetter
+      ? f.familyName?.toUpperCase().startsWith(selectedLetter)
+      : true
+  );
 
   return (
     <div>
@@ -92,28 +124,58 @@ function FamilyList() {
       />
 
       <div className="p-4 md:p-6 mt-16">
-        <button
-          className="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
-          onClick={() => window.history.back()}
-        >
-          &larr; Back
-        </button>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {families.map(f => (
-            <FamilyCard
-              key={f.id}
-              id={f.id}
-              familyName={f.familyName}
-              community={f.community}
-              familyHead={f.familyHead}
-              contactNumber={f.contactNumber}
-              totalAmount={f.totalAmount}
-              onDelete={openDelete}
-              onEdit={openEdit}
-              onAddContribution={handleAddContribution}
-            />
-          ))}
-        </div>
+        {filteredFamilies.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <button
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer text-sm"
+              onClick={() => window.history.back()}
+            >
+              &larr; Back
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            >
+              + Add Family
+            </button>
+          </div>
+        )}
+        {filteredFamilies.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {filteredFamilies.map(f => (
+              <FamilyCard
+                key={f.id}
+                id={f.id}
+                familyName={f.familyName}
+                community={f.community}
+                familyHead={f.familyHead}
+                contactNumber={f.contactNumber}
+                totalAmount={f.totalAmount}
+                onDelete={openDelete}
+                onEdit={openEdit}
+                onAddContribution={handleAddContribution}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center py-24">
+            <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+              No families yet. Create the first family to get started.
+            </p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            >
+              + Add Family
+            </button>
+            <button
+              className="mt-4 text-xs text-gray-500 hover:text-gray-700 underline"
+              onClick={() => window.history.back()}
+            >
+              &larr; Back
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Contribution Modal */}
@@ -152,8 +214,26 @@ function FamilyList() {
             isEdit
             onSubmit={submitEdit}
             onCancel={() => setEditingFamily(null)}
+            communityOptions={communityOptions}
           />
         )}
+      </Modal>
+
+      {/* Add Family Side Drawer */}
+      <Modal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="Add Family"
+        size="lg"
+        variant="side"
+        contentPointer
+        closeOnBackdrop={false}
+      >
+        <FamilyForm
+          onSubmit={submitAdd}
+          onCancel={() => setShowAdd(false)}
+          communityOptions={communityOptions}
+        />
       </Modal>
 
       {/* Delete Confirmation Modal */}

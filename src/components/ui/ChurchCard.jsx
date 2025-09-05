@@ -16,6 +16,7 @@ const ChurchCard = ({
   className = '',
   generatedBy,
   forane, // optional new prop if available
+  visitLabel = 'VISIT PARISH', // new customizable label
 }) => {
   const cardStyle = {
     ...(height !== 'auto' && { height }),
@@ -154,7 +155,7 @@ const ChurchCard = ({
                   }}
                   className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-[10px] cursor-pointer"
                 >
-                  VISIT PARISH
+                  {visitLabel}
                 </button>
                 <button
                   onClick={e => {
@@ -189,7 +190,7 @@ const ChurchCard = ({
                   }}
                   className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm cursor-pointer"
                 >
-                  VISIT PARISH
+                  {visitLabel}
                 </button>
                 <button
                   onClick={e => {

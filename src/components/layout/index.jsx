@@ -47,6 +47,15 @@ const Layout = () => {
           <Route path="/forane/add" element={<AddForane />} />
           <Route path="/parish/list" element={<ParishList />} />
           <Route path="/parish/add" element={<AddParish />} />
+          {/* Forane -> Community list (new dedicated route) */}
+          <Route
+            path="/forane/list/:foraneId/community/list"
+            element={<CommunityList />}
+          />
+          <Route
+            path="/forane/list/:foraneId/community/:communityId/visit"
+            element={<FamilyList />}
+          />
           <Route path="/institution/list" element={<InstitutionList />} />
           <Route path="/institution/add" element={<AddInstitution />} />
           <Route path="/others" element={<OthersList />} />

@@ -35,6 +35,7 @@ const FamilyForm = ({
   height = 'auto',
   width = '100%',
   className = '',
+  communityOptions = [], // new: array of strings or {value,label}
 }) => {
   const [formData, setFormData] = useState({
     familyName: initialData.familyName || '',
@@ -171,18 +172,41 @@ const FamilyForm = ({
                   <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
                     Community*
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="community"
                     value={formData.community}
                     onChange={handleInputChange}
-                    className={`w-full bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm border ${
+                    className={`w-full bg-gray-100 rounded-md p-2 pr-8 text-gray-800 text-xs sm:text-sm border ${
                       errors.community
                         ? 'border-red-400 bg-red-50'
                         : 'border-transparent focus:border-blue-400'
-                    } focus:outline-none focus:bg-white transition-colors`}
-                    placeholder="Enter community"
-                  />
+                    } focus:outline-none focus:bg-white transition-colors appearance-none`}
+                  >
+                    <option value="">Select community</option>
+                    {(() => {
+                      // Normalize options to {value,label}
+                      const normalized = communityOptions.map(opt =>
+                        typeof opt === 'string'
+                          ? { value: opt, label: opt }
+                          : { value: opt.value, label: opt.label || opt.value }
+                      );
+                      // Ensure current value present if editing and not in list
+                      if (
+                        formData.community &&
+                        !normalized.some(o => o.value === formData.community)
+                      ) {
+                        normalized.push({
+                          value: formData.community,
+                          label: formData.community,
+                        });
+                      }
+                      return normalized.map(o => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ));
+                    })()}
+                  </select>
                   {errors.community && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.community}

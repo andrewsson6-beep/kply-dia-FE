@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import ChurchCard from '../ui/ChurchCard';
 import Header from '../layout/Header';
+import { useNavigate } from 'react-router-dom';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const navigate = useNavigate();
 
   const churches = useMemo(
     () => [
@@ -48,6 +50,11 @@ const ForaneList = () => {
     );
   }, [selectedLetter, churches]);
 
+  const handleVisitForane = id => {
+    // Navigate to forane-specific community list (dedicated route)
+    navigate(`/forane/list/${id}/community/list`);
+  };
+
   return (
     <div className="pt-28 p-6">
       <Header
@@ -84,7 +91,8 @@ const ForaneList = () => {
             contactNumber={c.contactNumber}
             totalAmount={c.totalAmount}
             imageUrl={c.imageUrl}
-            onVisitParish={() => console.log('Visit Parish clicked', c.id)}
+            onVisitParish={() => handleVisitForane(c.id)}
+            visitLabel="VISIT FORANE"
             className="max-w-4xl mx-auto"
           />
         ))}

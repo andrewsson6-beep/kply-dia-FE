@@ -111,36 +111,53 @@ const OthersList = () => {
       />
 
       <div className="p-4 md:p-6 mt-16">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer text-sm"
-            onClick={() => window.history.back()}
-          >
-            &larr; Back
-          </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-          >
-            + Add New Individual
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {filtered.map(i => (
-            <IndividualCard
-              key={i.id}
-              {...i}
-              onAddContribution={openAddContribution}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="col-span-full text-center text-gray-500 py-10">
-              No individuals found.
-            </div>
-          )}
-        </div>
+        {filtered.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <button
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer text-sm"
+              onClick={() => window.history.back()}
+            >
+              &larr; Back
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            >
+              + Add Individual
+            </button>
+          </div>
+        )}
+        {filtered.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {filtered.map(i => (
+              <IndividualCard
+                key={i.id}
+                {...i}
+                onAddContribution={openAddContribution}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center py-24">
+            <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+              No individuals found. Add the first individual to get started.
+            </p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            >
+              + Add Individual
+            </button>
+            <button
+              className="mt-4 text-xs text-gray-500 hover:text-gray-700 underline"
+              onClick={() => window.history.back()}
+            >
+              &larr; Back
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add Individual Side Drawer */}
