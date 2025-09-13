@@ -24,7 +24,14 @@ import { setTokenAccessor } from '../api/api.js';
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['user', 'accessToken', 'refreshToken', 'isAuthenticated'],
+  whitelist: [
+    'user',
+    'accessToken',
+    'refreshToken',
+    'tokenExpiresAt',
+    'sessionUuid',
+    'isAuthenticated',
+  ],
 };
 
 const rootReducer = combineReducers({
@@ -51,9 +58,18 @@ export const store = configureStore({
 export const persistor = persistStore(store);
 
 // Provide token accessor to API layer
-setTokenAccessor(() => ({
-  accessToken: store.getState().auth.accessToken,
-}));
+setTokenAccessor(() => {
+  const state = store.getState();
+  const { accessToken, tokenExpiresAt } = state.auth || {};
+  if (!accessToken) return { accessToken: null };
+  if (tokenExpiresAt) {
+    const ms = Date.parse(tokenExpiresAt.replace(' ', 'T'));
+    if (!Number.isNaN(ms) && Date.now() >= ms) {
+      return { accessToken: null };
+    }
+  }
+  return { accessToken };
+});
 
 // Export default store
 export default store;

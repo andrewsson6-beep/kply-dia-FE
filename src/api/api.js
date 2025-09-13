@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Base URL from env; fallback to mock
+// Base URL from env; fallback to local dev
 const API_BASE_URL =
   (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
-  'https://mock.local';
+  'http://localhost:8000';
 
 // Token accessor (injected from store setup)
 let getTokens = () => ({ accessToken: null });
@@ -114,25 +114,99 @@ const mockFamilies = {
   ],
 };
 
-// --- Auth (mock) ----------------------------------------------------------
+// --- Auth (real) ----------------------------------------------------------
 export const authApi = {
+  // credentials: { email, password }
   login: async ({ email, password }) => {
-    await delay(700);
-    if (!email || !password) throw new Error('Missing credentials');
-    const role = email.includes('admin') ? 'admin' : 'user';
-    return {
-      user: {
-        id: 1,
-        name: role === 'admin' ? 'Admin User' : 'John Doe',
-        email,
-        role,
-      },
-      accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token',
+    // Map fields to API contract
+    const payload = {
+      useremail: email,
+      userpassword: password,
     };
+
+    try {
+      const res = await axiosInstance.post('/userlogin', payload);
+
+      // Some backends wrap in { code, msg, data }
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        const reason =
+          (typeof data === 'string' && data) || msg || 'Login failed';
+        const err = new Error(reason);
+        err.status = res.status;
+        throw err;
+      }
+
+      const {
+        access_token,
+        access_token_expire_time,
+        session_uuid,
+        usr_id,
+        usr_username,
+        usr_email,
+        usr_rol_id,
+      } = data;
+
+      // Build app user model
+      const user = {
+        id: usr_id,
+        username: usr_username,
+        email: usr_email,
+        roleId: usr_rol_id,
+      };
+
+      return {
+        user,
+        accessToken: access_token,
+        refreshToken: null,
+        tokenExpiresAt: access_token_expire_time || null,
+        sessionUuid: session_uuid || null,
+      };
+    } catch (error) {
+      // Normalize error message
+      const res = error.response;
+      if (res?.data) {
+        const { code, data, msg } = res.data;
+        if (code === 400) {
+          throw new Error(
+            (typeof data === 'string' && data) || msg || 'Invalid Credentials'
+          );
+        }
+        throw new Error(msg || 'Login failed');
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  changePassword: async ({ current_password, new_password }) => {
+    try {
+      const res = await axiosInstance.post('/changepassword', {
+        current_password,
+        new_password,
+      });
+      const { code, msg, data } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Change password failed'
+        );
+      }
+      return {
+        message:
+          typeof data === 'string' ? data : 'Password changed successfully',
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { msg, data } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Change password failed'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   logout: async () => {
-    await delay(300);
+    // If backend supports logout, call it. For now, just resolve.
+    await delay(100);
     return { success: true };
   },
 };

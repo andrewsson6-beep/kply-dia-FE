@@ -15,7 +15,15 @@ export const useUser = () => {
 };
 
 export const useIsAuthenticated = () => {
-  return useAppSelector(state => state.auth.isAuthenticated);
+  return useAppSelector(state => {
+    const { isAuthenticated, tokenExpiresAt } = state.auth || {};
+    if (!isAuthenticated) return false;
+    if (!tokenExpiresAt) return isAuthenticated;
+    // tokenExpiresAt is expected as "YYYY-MM-DD HH:mm:ss"
+    const ms = Date.parse(tokenExpiresAt.replace(' ', 'T'));
+    if (Number.isNaN(ms)) return isAuthenticated; // if parse fails, trust flag
+    return Date.now() < ms;
+  });
 };
 
 export const useAuthLoading = () => {

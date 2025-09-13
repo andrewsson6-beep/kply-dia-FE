@@ -44,6 +44,15 @@ function App() {
     );
   }
 
+  // For any non-auth route, if not authenticated redirect to login
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       {/* All non-auth routes fall under the existing layout */}

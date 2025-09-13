@@ -178,7 +178,7 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-4 text-[10px] text-center text-gray-400 leading-snug">
-            Demo: admin@example.com / admin123 • user@example.com / user123
+            Use your account credentials to sign in.
           </div>
         </div>
         <p className="mt-6 text-center text-[10px] text-white/70 tracking-wide">

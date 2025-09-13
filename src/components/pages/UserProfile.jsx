@@ -1,25 +1,49 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useAppDispatch, useUser } from '../../store/hooks.js';
+import { updateUserProfile } from '../../store/slices/authSlice.js';
+import { authApi } from '../../api/api.js';
 
 const UserProfile = () => {
-  // Generic placeholder user data (no Redux yet)
-  const baseUser = {
-    name: 'Jane Doe',
-    email: 'jane.doe@example.com',
-    role: 'admin',
-    createdAt: new Date('2024-01-12'),
-    lastLoginAt: new Date(),
-  };
+  const dispatch = useAppDispatch();
+  const authUser = useUser();
 
-  const [form, setForm] = useState(() => ({
-    name: baseUser.name,
-    email: baseUser.email,
-    role: baseUser.role,
-  }));
+  // Map backend structure to UI-friendly model
+  const appUser = useMemo(() => {
+    if (!authUser) return null;
+    const roleLabel =
+      authUser.role ||
+      (authUser.roleId === 1
+        ? 'admin'
+        : authUser.roleId === 2
+          ? 'user'
+          : String(authUser.roleId || 'user'));
+    return {
+      name: authUser.username || authUser.name || 'User',
+      email: authUser.email,
+      role: roleLabel,
+      createdAt: authUser.createdAt || null,
+      lastLoginAt: authUser.lastLoginAt || null,
+    };
+  }, [authUser]);
+
+  const [form, setForm] = useState(() => ({ name: '', email: '', role: '' }));
   const [original, setOriginal] = useState(() => ({
-    name: baseUser.name,
-    email: baseUser.email,
-    role: baseUser.role,
+    name: '',
+    email: '',
+    role: '',
   }));
+
+  useEffect(() => {
+    if (appUser) {
+      const initial = {
+        name: appUser.name || '',
+        email: appUser.email || '',
+        role: appUser.role || '',
+      };
+      setForm(initial);
+      setOriginal(initial);
+    }
+  }, [appUser]);
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwErrors, setPwErrors] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -66,27 +90,33 @@ const UserProfile = () => {
     if (e) e.preventDefault();
     setSaving(true);
     setGlobalMsg(null);
+    // Persist change to Redux (update username/name only; email/role immutable here)
+    dispatch(updateUserProfile({ username: form.name, name: form.name }));
     setTimeout(() => {
       setSaving(false);
       setGlobalMsg('Profile updated successfully');
-      setOriginal({
-        name: form.name,
-        email: form.email,
-        role: form.role,
-      });
+      setOriginal({ name: form.name, email: form.email, role: form.role });
       setTimeout(() => setGlobalMsg(null), 2500);
-    }, 600);
+    }, 300);
   };
 
-  const handlePasswordUpdate = () => {
+  const handlePasswordUpdate = async () => {
     if (!validatePw()) return;
     setPwSaving(true);
-    setTimeout(() => {
-      setPwSaving(false);
+    try {
+      await authApi.changePassword({
+        current_password: pwForm.current,
+        new_password: pwForm.next,
+      });
       setPwForm({ current: '', next: '', confirm: '' });
-      setGlobalMsg('Password updated');
+      setGlobalMsg('Password changed successfully');
+      setPwErrors(null);
+    } catch (err) {
+      setPwErrors(err.message || 'Failed to change password');
+    } finally {
+      setPwSaving(false);
       setTimeout(() => setGlobalMsg(null), 2500);
-    }, 700);
+    }
   };
 
   const logoutOtherDevices = () => {
@@ -171,8 +201,8 @@ const UserProfile = () => {
                       Member Since
                     </dt>
                     <dd className="text-xs font-medium text-gray-800 mt-1">
-                      {baseUser.createdAt
-                        ? new Date(baseUser.createdAt).toLocaleDateString()
+                      {appUser?.createdAt
+                        ? new Date(appUser.createdAt).toLocaleDateString()
                         : '—'}
                     </dd>
                   </div>
@@ -181,8 +211,8 @@ const UserProfile = () => {
                       Last Login
                     </dt>
                     <dd className="text-xs font-medium text-gray-800 mt-1">
-                      {baseUser.lastLoginAt
-                        ? new Date(baseUser.lastLoginAt).toLocaleDateString()
+                      {appUser?.lastLoginAt
+                        ? new Date(appUser.lastLoginAt).toLocaleDateString()
                         : '—'}
                     </dd>
                   </div>

@@ -7,6 +7,8 @@ const initialState = {
   user: null,
   accessToken: null,
   refreshToken: null,
+  tokenExpiresAt: null,
+  sessionUuid: null,
   isAuthenticated: false,
   status: AUTH_STATUS.IDLE,
   error: null,
@@ -31,6 +33,8 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
+      state.tokenExpiresAt = null;
+      state.sessionUuid = null;
       state.isAuthenticated = false;
       state.status = AUTH_STATUS.IDLE;
       state.error = null;
@@ -46,11 +50,14 @@ const authSlice = createSlice({
 
     // Set auth from persisted state (for rehydration)
     setAuthFromStorage: (state, action) => {
-      const { user, accessToken, refreshToken } = action.payload;
+      const { user, accessToken, refreshToken, tokenExpiresAt, sessionUuid } =
+        action.payload;
       if (user && accessToken) {
         state.user = user;
         state.accessToken = accessToken;
         state.refreshToken = refreshToken || null;
+        state.tokenExpiresAt = tokenExpiresAt || null;
+        state.sessionUuid = sessionUuid || null;
         state.isAuthenticated = true;
         state.status = AUTH_STATUS.SUCCESS;
       }
@@ -70,6 +77,8 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
+        state.tokenExpiresAt = action.payload.tokenExpiresAt || null;
+        state.sessionUuid = action.payload.sessionUuid || null;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -80,6 +89,8 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.tokenExpiresAt = null;
+        state.sessionUuid = null;
         state.isAuthenticated = false;
       })
       // Logout
@@ -93,6 +104,8 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.tokenExpiresAt = null;
+        state.sessionUuid = null;
         state.isAuthenticated = false;
         state.error = null;
       })
@@ -104,6 +117,8 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
+        state.tokenExpiresAt = null;
+        state.sessionUuid = null;
         state.isAuthenticated = false;
       });
   },
