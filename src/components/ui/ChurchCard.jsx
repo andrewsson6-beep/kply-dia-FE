@@ -64,14 +64,30 @@ const ChurchCard = ({
       aria-label={onVisitParish ? `Visit parish ${churchName}` : undefined}
     >
       <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-        {/* Church Image */}
+        {/* Church Image / Placeholder */}
         <div className="w-full sm:w-2/5 md:w-1/3 relative flex-shrink-0">
           <div className="h-32 sm:h-48 md:h-full min-h-[120px] sm:min-h-[200px]">
-            <img
-              src={imageUrl}
-              alt={churchName}
-              className="w-full h-full object-cover rounded"
-            />
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={churchName}
+                className="w-full h-full object-cover rounded"
+                onError={e => {
+                  e.currentTarget.style.display = 'none';
+                  const ph = e.currentTarget.nextElementSibling;
+                  if (ph) ph.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            {/* Placeholder box (hidden when image loads) */}
+            <div
+              className="w-full h-full flex items-center justify-center rounded bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 text-blue-600"
+              aria-hidden={!!imageUrl}
+            >
+              <span className="text-xs sm:text-sm font-semibold px-2 text-center truncate">
+                {churchName || 'Forane'}
+              </span>
+            </div>
             {id && (
               <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-blue-400 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-md">
                 {id}
@@ -93,6 +109,17 @@ const ChurchCard = ({
                   {churchName}
                 </div>
               </div>
+
+              {forane ? (
+                <div className="flex-shrink-0">
+                  <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
+                    Forane
+                  </label>
+                  <div className="bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm break-words overflow-hidden">
+                    {forane}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="flex-shrink-0">
                 <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">

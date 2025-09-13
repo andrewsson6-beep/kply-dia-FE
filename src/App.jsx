@@ -1,15 +1,32 @@
 import './App.css';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useIsAuthenticated } from './store/hooks.js';
+import {
+  useIsAuthenticated,
+  useAppDispatch,
+  useAppSelector,
+} from './store/hooks.js';
 import Layout from './components/layout/index';
 import LoginPage from './components/auth/LoginPage.jsx';
 import ForgotPassword from './components/auth/ForgotPassword.jsx';
+import { useEffect } from 'react';
+import { fetchForanesThunk } from './store/actions/foraneActions.js';
 
 function App() {
   const location = useLocation();
   const authRoutes = ['/login', '/forgot-password'];
   const isAuthRoute = authRoutes.includes(location.pathname);
   const isAuthenticated = useIsAuthenticated();
+  const dispatch = useAppDispatch();
+  const { loaded: foraneLoaded, loading: foraneLoading } = useAppSelector(
+    state => state.forane
+  );
+
+  // Preload forane list right after login (to support mapping forane names elsewhere)
+  useEffect(() => {
+    if (isAuthenticated && !foraneLoaded && !foraneLoading) {
+      dispatch(fetchForanesThunk());
+    }
+  }, [isAuthenticated, foraneLoaded, foraneLoading, dispatch]);
 
   // Redirect root to login page
   if (location.pathname === '/') {

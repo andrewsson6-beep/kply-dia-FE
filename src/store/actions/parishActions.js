@@ -11,3 +11,14 @@ export const fetchParishesThunk = createAsyncThunk(
     }
   }
 );
+
+export const addParishThunk = createAsyncThunk(
+  'parish/add',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await domainApi.addParish(payload);
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to add parish');
+    }
+  }
+);

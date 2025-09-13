@@ -119,8 +119,7 @@ const ChurchForm = ({
       newErrors.contactNumber = 'Contact number is required';
     if (!formData.totalAmount.trim())
       newErrors.totalAmount = 'Total amount is required';
-    if (!formData.image && !imagePreview)
-      newErrors.image = 'Church image is required';
+    // Image upload is optional; retain only file-type/size errors from handleImageChange
 
     // Validate forane if field is shown
     if (showForaneField && !formData.forane.trim()) {
@@ -171,7 +170,7 @@ const ChurchForm = ({
     >
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-          {/* Image Upload Section */}
+          {/* Image Upload Section (optional) */}
           <div className="w-full sm:w-2/5 md:w-1/3 relative flex-shrink-0">
             <div className="h-32 sm:h-48 md:h-full min-h-[120px] sm:min-h-[200px]">
               <div
@@ -218,7 +217,7 @@ const ChurchForm = ({
                         />
                       </svg>
                       <p className="text-xs sm:text-sm font-medium">
-                        Add Image
+                        Add Image (optional)
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         Click to upload

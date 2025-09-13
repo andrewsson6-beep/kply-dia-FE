@@ -5,9 +5,20 @@ export const fetchForanesThunk = createAsyncThunk(
   'forane/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      return await domainApi.fetchForanes();
+      return await domainApi.fetchForanes(); // returns { items, options }
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to load foranes');
+    }
+  }
+);
+
+export const addForaneThunk = createAsyncThunk(
+  'forane/add',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await domainApi.addForane(payload);
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to add forane');
     }
   }
 );

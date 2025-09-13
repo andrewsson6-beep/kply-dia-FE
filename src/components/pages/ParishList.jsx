@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import ChurchCard from '../ui/ChurchCard';
 import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
+import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 
 const ParishList = () => {
   const navigate = useNavigate();
@@ -13,10 +14,26 @@ const ParishList = () => {
   const { items, loading, error, loaded } = useAppSelector(
     state => state.parish
   );
+  const {
+    nameOptions,
+    loaded: foraneLoaded,
+    loading: foraneLoading,
+  } = useAppSelector(state => state.forane);
 
   useEffect(() => {
     if (!loaded && !loading) dispatch(fetchParishesThunk());
   }, [loaded, loading, dispatch]);
+
+  // Ensure forane options are available for mapping names
+  useEffect(() => {
+    if (!foraneLoaded && !foraneLoading) dispatch(fetchForanesThunk());
+  }, [foraneLoaded, foraneLoading, dispatch]);
+
+  const foraneNameById = useMemo(() => {
+    const map = new Map();
+    (nameOptions || []).forEach(opt => map.set(opt.id, opt.name)); // opt also has location
+    return map;
+  }, [nameOptions]);
 
   const handleVisitParish = parishId => {
     navigate(`/parish/list/${parishId}/community/list`);
@@ -42,6 +59,7 @@ const ParishList = () => {
             contactNumber={c.contactNumber}
             totalAmount={c.totalAmount}
             imageUrl={c.imageUrl}
+            forane={foraneNameById.get(c.foraneId) || ''}
             onVisitParish={() => handleVisitParish(c.id)}
             className="max-w-4xl mx-auto"
           />

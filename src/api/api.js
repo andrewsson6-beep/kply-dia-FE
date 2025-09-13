@@ -31,42 +31,9 @@ axiosInstance.interceptors.request.use(config => {
 // --- Mock helpers ---------------------------------------------------------
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// Seed mock data (would be replaced by server data later)
-let mockForanes = [
-  {
-    id: 1,
-    churchName: 'Our Lady of Dolours Church',
-    place: 'Mundakkayam',
-    vicarName: 'Rev. Fr. James Muthanattu',
-    contactNumber: '9633104090',
-    totalAmount: 'Rs. 12,00,692',
-    imageUrl:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
-  },
-  {
-    id: 2,
-    churchName: "St. Mary's Cathedral",
-    place: 'Kochi',
-    vicarName: 'Rev. Fr. John Doe',
-    contactNumber: '9876543210',
-    totalAmount: 'Rs. 15,00,000',
-    imageUrl:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
-  },
-  {
-    id: 3,
-    churchName: 'Holy Cross Church',
-    place: 'Thrissur',
-    vicarName: 'Rev. Fr. Michael',
-    contactNumber: '9999888777',
-    totalAmount: 'Rs. 8,50,000',
-    imageUrl:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
-  },
-];
+// (removed mockForanes; real API in use)
 
-// For simplicity parishes reuse same initial data
-let mockParishes = mockForanes.map(p => ({ ...p, id: p.id }));
+// (removed mockParishes; real API in use)
 
 // Communities by parent key `${type}:${id}`
 const mockCommunities = {};
@@ -212,14 +179,123 @@ export const authApi = {
 };
 
 // --- Domain APIs ----------------------------------------------------------
+const formatINR = val => {
+  const num = Number(val);
+  if (Number.isNaN(num)) return String(val ?? '');
+  // Keep decimals only if present and non-zero
+  const hasDecimals =
+    String(val).includes('.') && Number(String(val).split('.')[1]) > 0;
+  return `Rs. ${num.toLocaleString('en-IN', {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0,
+  })}`;
+};
+
 export const domainApi = {
   fetchForanes: async () => {
-    await delay(500);
-    return [...mockForanes];
+    try {
+      const res = await axiosInstance.get('/forane-list');
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !Array.isArray(data)) {
+        throw new Error(msg || 'Failed to load foranes');
+      }
+      const items = data.map(row => ({
+        id: row.for_id,
+        churchName: row.for_name,
+        place: row.for_location,
+        vicarName: row.for_vicar_name,
+        contactNumber: row.for_contact_number,
+        totalAmount: formatINR(row.for_total_contribution_amount),
+        imageUrl: undefined,
+      }));
+      const options = data.map(row => ({
+        id: row.for_id,
+        name: row.for_name,
+        location: row.for_location,
+      }));
+      return { items, options };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to load foranes'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addForane: async payload => {
+    try {
+      const res = await axiosInstance.post('/add-new-forane', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to add forane'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to add forane'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   fetchParishes: async () => {
-    await delay(500);
-    return [...mockParishes];
+    try {
+      const res = await axiosInstance.get('/all-parish-list');
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !Array.isArray(data)) {
+        throw new Error(msg || 'Failed to load parishes');
+      }
+      const items = data.map(row => ({
+        id: row.par_id,
+        churchName: row.par_name,
+        place: row.par_location,
+        vicarName: row.par_vicar_name,
+        contactNumber: row.par_contact_number || '',
+        totalAmount: formatINR(row.par_total_contribution_amount),
+        imageUrl: undefined,
+        foraneId: row.par_for_id,
+        code: row.par_code,
+      }));
+      return items;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to load parishes'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addParish: async payload => {
+    try {
+      const res = await axiosInstance.post('/add-new-parish', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to add parish'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to add parish'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   fetchCommunities: async (parentType, parentId) => {
     await delay(400);

@@ -1,5 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchParishesThunk } from '../actions/parishActions.js';
+import {
+  fetchParishesThunk,
+  addParishThunk,
+} from '../actions/parishActions.js';
 
 const initialState = {
   items: [],
@@ -26,6 +29,15 @@ const parishSlice = createSlice({
       .addCase(fetchParishesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading parishes';
+      })
+      .addCase(addParishThunk.pending, state => {
+        state.error = null;
+      })
+      .addCase(addParishThunk.fulfilled, state => {
+        state.loaded = false; // so list can refresh on next visit
+      })
+      .addCase(addParishThunk.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to add parish';
       });
   },
 });
