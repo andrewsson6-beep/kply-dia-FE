@@ -18,8 +18,6 @@ const ForaneList = () => {
         vicarName: 'Rev. Fr. James Muthanattu',
         contactNumber: '9633104090',
         totalAmount: 'Rs. 12,00,692',
-        imageUrl:
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
       },
       {
         id: 2,
@@ -28,8 +26,6 @@ const ForaneList = () => {
         vicarName: 'Rev. Fr. John Doe',
         contactNumber: '9876543210',
         totalAmount: 'Rs. 15,00,000',
-        imageUrl:
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
       },
       {
         id: 3,
@@ -38,8 +34,6 @@ const ForaneList = () => {
         vicarName: 'Rev. Fr. Michael',
         contactNumber: '9999888777',
         totalAmount: 'Rs. 8,50,000',
-        imageUrl:
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnacSXF9M0AX7bnQVOMKA8HjSHIiPRF1NA9g&s',
       },
     ],
     []
@@ -92,7 +86,6 @@ const ForaneList = () => {
             vicarName={c.vicarName}
             contactNumber={c.contactNumber}
             totalAmount={c.totalAmount}
-            imageUrl={c.imageUrl}
             onVisitParish={() => handleVisitForane(c.id)}
             visitLabel="VISIT FORANE"
             className="max-w-4xl mx-auto"

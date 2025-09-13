@@ -9,7 +9,6 @@ const ChurchCard = ({
   vicarName,
   contactNumber,
   totalAmount,
-  imageUrl,
   onVisitParish,
   height = 'auto',
   width = '100%',
@@ -63,26 +62,17 @@ const ChurchCard = ({
       tabIndex={onVisitParish ? 0 : undefined}
       aria-label={onVisitParish ? `Visit parish ${churchName}` : undefined}
     >
-      <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-        {/* Church Image */}
-        <div className="w-full sm:w-2/5 md:w-1/3 relative flex-shrink-0">
-          <div className="h-32 sm:h-48 md:h-full min-h-[120px] sm:min-h-[200px]">
-            <img
-              src={imageUrl}
-              alt={churchName}
-              className="w-full h-full object-cover rounded"
-            />
-            {id && (
-              <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-blue-400 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-md">
+      <div className="flex flex-col h-full p-3 sm:p-4">
+        {/* Church Details */}
+        <div className="relative flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0">
+          {id && (
+            <div className="absolute top-2 left-2">
+              <div className="bg-blue-500 text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-md">
                 {id}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Church Details */}
-        <div className="flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 h-full">
+            </div>
+          )}
+          <div className="pt-6 sm:pt-8 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 h-full">
             {/* Left Column */}
             <div className="space-y-2 flex flex-col">
               <div className="flex-shrink-0">
