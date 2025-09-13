@@ -1,22 +1,31 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import { FaLayerGroup, FaChurch, FaUsers, FaUser } from 'react-icons/fa';
+import { useAppSelector } from '../../store/hooks.js';
 
-// Temporary mock counts (replace with real aggregated state / API later)
-// These could be lifted to a context/store when backend available.
 const useDashboardStats = () => {
-  // Simulated data sources (replace with selectors when integrated)
-  const foranes = useMemo(() => [1, 2, 3], []); // ForaneList shows 3
-  const parishes = useMemo(() => [1, 2, 3], []); // ParishList shows 3
-  const communities = useMemo(() => [1, 2, 3], []); // CommunityList initial 3
-  const individuals = useMemo(() => new Array(17).fill(0), []); // Placeholder
-
+  const foraneCount = useAppSelector(s => s.forane.items.length);
+  const parishCount = useAppSelector(s => s.parish.items.length);
+  // Approx communities total
+  const communityCount = useAppSelector(s =>
+    Object.values(s.community.byParent || {}).reduce(
+      (acc, entry) => acc + entry.items.length,
+      0
+    )
+  );
+  // Individuals placeholder (families * arbitrary factor can be replaced later)
+  const familyCount = useAppSelector(s =>
+    Object.values(s.family.byCommunity || {}).reduce(
+      (acc, entry) => acc + entry.items.length,
+      0
+    )
+  );
   return {
-    forane: foranes.length,
-    parish: parishes.length,
-    community: communities.length,
-    individual: individuals.length,
+    forane: foraneCount,
+    parish: parishCount,
+    community: communityCount,
+    individual: familyCount, // until individual entity exists
   };
 };
 

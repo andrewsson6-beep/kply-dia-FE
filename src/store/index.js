@@ -14,39 +14,30 @@ import { combineReducers } from '@reduxjs/toolkit';
 
 // Import reducers
 import authReducer from './slices/authSlice.js';
+import foraneReducer from './slices/foraneSlice.js';
+import parishReducer from './slices/parishSlice.js';
+import communityReducer from './slices/communitySlice.js';
+import familyReducer from './slices/familySlice.js';
+import { setTokenAccessor } from '../api/api.js';
 
-// Persist configuration
-const persistConfig = {
-  key: 'root',
-  version: 1,
-  storage,
-  // Only persist auth state
-  whitelist: ['auth'],
-  // You can blacklist certain parts if needed
-  // blacklist: ['someOtherSlice']
-};
-
-// Auth persist configuration (more specific)
+// Persist only auth slice (selected fields)
 const authPersistConfig = {
   key: 'auth',
   storage,
-  // Only persist specific fields from auth state
-  whitelist: ['user', 'accessToken', 'isAuthenticated'],
+  whitelist: ['user', 'accessToken', 'refreshToken', 'isAuthenticated'],
 };
 
-// Root reducer
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
-  // Add other reducers here as needed
-  // example: exampleReducer,
+  forane: foraneReducer,
+  parish: parishReducer,
+  community: communityReducer,
+  family: familyReducer,
 });
-
-// Persisted reducer
-const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Configure store
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -56,8 +47,13 @@ export const store = configureStore({
   devTools: import.meta.env.DEV,
 });
 
-// Create persistor
+// Create persistor (only auth persisted)
 export const persistor = persistStore(store);
+
+// Provide token accessor to API layer
+setTokenAccessor(() => ({
+  accessToken: store.getState().auth.accessToken,
+}));
 
 // Export default store
 export default store;

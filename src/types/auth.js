@@ -16,13 +16,7 @@ export const AUTH_STATUS = {
 };
 
 // API Error types
-export const API_ERROR_TYPES = {
-  NETWORK_ERROR: 'network_error',
-  VALIDATION_ERROR: 'validation_error',
-  AUTHENTICATION_ERROR: 'authentication_error',
-  SERVER_ERROR: 'server_error',
-  UNKNOWN_ERROR: 'unknown_error',
-};
+// API_ERROR_TYPES trimmed out for simplified mock implementation
 
 /**
  * User object structure

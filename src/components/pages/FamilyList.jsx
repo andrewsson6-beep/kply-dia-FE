@@ -1,49 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import FamilyCard from '../ui/FamilyCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import FamilyForm from '../forms/FamilyForm';
 import ContributionForm from '../forms/ContributionForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
+import { useParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import {
+  addContributionThunk,
+  addFamilyThunk,
+  deleteFamilyThunk,
+  fetchFamiliesThunk,
+  updateFamilyThunk,
+} from '../../store/actions/familyActions.js';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const headerOffset = useHeaderOffset();
 
-  const [families, setFamilies] = useState([
-    {
-      id: 1,
-      familyName: 'The Johnsons',
-      community: "St. Mary's",
-      familyHead: 'Michael Johnson',
-      contactNumber: '123-456-7890',
-      totalAmount: 'Rs. 50,000',
-    },
-    {
-      id: 2,
-      familyName: 'The Smiths',
-      community: 'St. Thomas',
-      familyHead: 'Sarah Smith',
-      contactNumber: '987-654-3210',
-      totalAmount: 'Rs. 65,300',
-    },
-    {
-      id: 3,
-      familyName: 'The Browns',
-      community: 'Holy Family',
-      familyHead: 'David Brown',
-      contactNumber: '555-123-0000',
-      totalAmount: 'Rs. 42,780',
-    },
-    {
-      id: 4,
-      familyName: 'The Wilsons',
-      community: 'Sacred Heart',
-      familyHead: 'Emily Wilson',
-      contactNumber: '444-222-1111',
-      totalAmount: 'Rs. 71,920',
-    },
-  ]);
+  const dispatch = useAppDispatch();
+  const { communityId } = useParams();
+  const cid = Number(communityId);
+  const famState = useAppSelector(
+    state =>
+      state.family.byCommunity[cid] || {
+        items: [],
+        loading: false,
+        error: null,
+      }
+  );
+  const { items: families, loading, error } = famState;
 
   const [contributionFor, setContributionFor] = useState(null); // family id | null
   const [editingFamily, setEditingFamily] = useState(null); // family object | null
@@ -53,13 +40,16 @@ function FamilyList() {
     new Set(families.map(f => f.community).filter(Boolean))
   );
 
-  const handleAddContribution = id => {
-    setContributionFor(id);
-  };
+  const handleAddContribution = id => setContributionFor(id);
 
   const handleSubmitContribution = data => {
-    console.log('Submit contribution', data);
-    // TODO: integrate API call
+    dispatch(
+      addContributionThunk({
+        communityId: cid,
+        familyId: contributionFor,
+        amount: Number(data.amount || 0),
+      })
+    );
     setContributionFor(null);
   };
 
@@ -69,9 +59,7 @@ function FamilyList() {
   };
 
   const submitEdit = data => {
-    setFamilies(prev =>
-      prev.map(f => (f.id === data.id ? { ...f, ...data } : f))
-    );
+    dispatch(updateFamilyThunk({ communityId: cid, data }));
     setEditingFamily(null);
   };
 
@@ -81,38 +69,30 @@ function FamilyList() {
   };
 
   const confirmDelete = () => {
-    if (deletingFamily) {
-      setFamilies(prev => prev.filter(f => f.id !== deletingFamily.id));
-    }
+    if (deletingFamily)
+      dispatch(deleteFamilyThunk({ communityId: cid, id: deletingFamily.id }));
     setDeletingFamily(null);
   };
 
   const submitAdd = data => {
-    setFamilies(prev => {
-      const nextId = prev.length ? Math.max(...prev.map(f => f.id)) + 1 : 1;
-      const ensureAmount = data.totalAmount?.toString().trim()
-        ? data.totalAmount
-        : 'Rs. 0';
-      return [
-        ...prev,
-        {
-          id: nextId,
-          familyName: data.familyName,
-          community: data.community,
-          familyHead: data.familyHead,
-          contactNumber: data.contactNumber,
-          totalAmount: ensureAmount,
-        },
-      ];
-    });
+    dispatch(addFamilyThunk({ communityId: cid, data }));
     setShowAdd(false);
   };
 
   // Filter by selected letter (familyName)
-  const filteredFamilies = families.filter(f =>
-    selectedLetter
-      ? f.familyName?.toUpperCase().startsWith(selectedLetter)
-      : true
+  useEffect(() => {
+    if (cid && !famState.loaded && !loading)
+      dispatch(fetchFamiliesThunk({ communityId: cid }));
+  }, [cid, famState.loaded, loading, dispatch]);
+
+  const filteredFamilies = useMemo(
+    () =>
+      families.filter(f =>
+        selectedLetter
+          ? f.familyName?.toUpperCase().startsWith(selectedLetter)
+          : true
+      ),
+    [families, selectedLetter]
   );
 
   return (
@@ -141,6 +121,11 @@ function FamilyList() {
             >
               + Add Family
             </button>
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+            {error}
           </div>
         )}
         {filteredFamilies.length > 0 ? (
@@ -177,6 +162,11 @@ function FamilyList() {
             >
               &larr; Back
             </button>
+          </div>
+        )}
+        {loading && (
+          <div className="flex justify-center py-10">
+            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

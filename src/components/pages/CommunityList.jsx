@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CommunityCard from '../ui/CommunityCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import CommunityForm from '../forms/CommunityForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
+import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import {
+  addCommunityThunk,
+  fetchCommunitiesThunk,
+} from '../../store/actions/communityActions.js';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -12,11 +17,7 @@ const CommunityList = () => {
 
   const navigate = useNavigate();
 
-  const [communities, setCommunities] = useState([
-    { id: 1, number: 1, name: 'St Bartholomew' },
-    { id: 2, number: 2, name: 'St Evaparasiamma' },
-    { id: 3, number: 3, name: 'St Thomas' },
-  ]);
+  const dispatch = useAppDispatch();
   const [showAdd, setShowAdd] = useState(false);
 
   const { parishId, foraneId } = useParams();
@@ -36,22 +37,41 @@ const CommunityList = () => {
     else navigate('/parish/list');
   };
 
-  // Filter by selected letter if present
-  const filtered = communities.filter(c =>
-    selectedLetter ? c.name.toUpperCase().startsWith(selectedLetter) : true
+  const parentType = inForaneContext ? 'forane' : 'parish';
+  const parentId = inForaneContext ? Number(foraneId) : Number(parishId);
+  const key = `${parentType}:${parentId}`;
+  const communityState = useAppSelector(
+    state =>
+      state.community.byParent[key] || {
+        items: [],
+        loading: false,
+        error: null,
+      }
+  );
+  const { items, loading, error } = communityState;
+
+  useEffect(() => {
+    if (parentId && !communityState.loaded && !loading) {
+      dispatch(fetchCommunitiesThunk({ parentType, parentId }));
+    }
+  }, [parentId, parentType, communityState.loaded, loading, dispatch]);
+
+  const filtered = useMemo(
+    () =>
+      items.filter(c =>
+        selectedLetter ? c.name.toUpperCase().startsWith(selectedLetter) : true
+      ),
+    [items, selectedLetter]
   );
 
   const handleAddCommunity = data => {
-    // data: { number?, name }
-    setCommunities(prev => {
-      const nextId = prev.length ? Math.max(...prev.map(c => c.id)) + 1 : 1;
-      const number = data.number
-        ? Number(data.number)
-        : prev.length
-          ? Math.max(...prev.map(c => c.number || 0)) + 1
-          : 1;
-      return [...prev, { id: nextId, number, name: data.name }];
-    });
+    dispatch(
+      addCommunityThunk({
+        parentType,
+        parentId,
+        data: { name: data.name, number: data.number },
+      })
+    );
     setShowAdd(false);
   };
 
@@ -87,7 +107,11 @@ const CommunityList = () => {
             </button>
           </div>
         )}
-
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+            {error}
+          </div>
+        )}
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {filtered.map(c => (
@@ -116,6 +140,11 @@ const CommunityList = () => {
             >
               &larr; Back
             </button>
+          </div>
+        )}
+        {loading && (
+          <div className="flex justify-center py-10">
+            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

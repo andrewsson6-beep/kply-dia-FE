@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAppDispatch, useAuth } from '../../store/hooks.js';
-import { loginUser, clearError } from '../../store/slices/authSlice.js';
+import { clearError } from '../../store/slices/authSlice.js';
+import { loginThunk } from '../../store/actions/authActions.js';
 import bgImage from '../../assets/images/sky_mmt.jpg';
 import logo from '../../assets/images/mmtlogo.svg';
 
@@ -48,12 +49,12 @@ const LoginPage = () => {
 
     try {
       const resultAction = await dispatch(
-        loginUser({
+        loginThunk({
           email: formData.email.trim(),
           password: formData.password,
         })
       );
-      if (loginUser.fulfilled.match(resultAction)) {
+      if (loginThunk.fulfilled.match(resultAction)) {
         navigate('/dashboard', { replace: true });
       }
     } catch {
