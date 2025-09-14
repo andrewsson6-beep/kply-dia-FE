@@ -18,6 +18,7 @@ import foraneReducer from './slices/foraneSlice.js';
 import parishReducer from './slices/parishSlice.js';
 import communityReducer from './slices/communitySlice.js';
 import familyReducer from './slices/familySlice.js';
+import individualReducer from './slices/individualSlice.js';
 import { setTokenAccessor } from '../api/api.js';
 
 // Persist only auth slice (selected fields)
@@ -40,6 +41,7 @@ const rootReducer = combineReducers({
   parish: parishReducer,
   community: communityReducer,
   family: familyReducer,
+  individual: individualReducer,
 });
 
 // Configure store

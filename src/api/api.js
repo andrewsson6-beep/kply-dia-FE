@@ -297,6 +297,181 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  addIndividual: async payload => {
+    try {
+      const res = await axiosInstance.post(
+        '/individual/add-new-individual',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add individual'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add individual'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateIndividual: async payload => {
+    // payload: { ind_id, ind_full_name, ind_phone_number, ind_email, ind_address }
+    try {
+      const res = await axiosInstance.put('/individual/', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update individual'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update individual'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addIndividualContribution: async payload => {
+    try {
+      const res = await axiosInstance.post(
+        '/individual/add-individual-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add contribution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  fetchIndividuals: async () => {
+    try {
+      const res = await axiosInstance.get('/individual/individuals-list');
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !Array.isArray(data)) {
+        throw new Error(msg || 'Failed to load individuals');
+      }
+      const items = data.map(row => {
+        const address = row.ind_address || '';
+        const parts = address
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+        const place = parts.length ? parts[parts.length - 1] : '';
+        const houseName = parts.length
+          ? parts.slice(0, -1).join(', ')
+          : address;
+        return {
+          id: row.ind_id,
+          individualName: row.ind_full_name,
+          contactNumber: row.ind_phone_number || '',
+          email: row.ind_email || '',
+          address,
+          houseName,
+          place,
+          totalAmount: formatINR(row.ind_total_contribution_amount),
+        };
+      });
+      return items;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load individuals'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  fetchIndividualDetails: async ind_id => {
+    try {
+      const res = await axiosInstance.post('/individual/individual-details', {
+        ind_id,
+      });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to load individual');
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load individual'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateIndividualContribution: async payload => {
+    try {
+      const res = await axiosInstance.post(
+        '/individual/update-individual-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update contribution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchCommunities: async (parentType, parentId) => {
     await delay(400);
     const key = `${parentType}:${parentId}`;

@@ -1,32 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../layout/Header';
 import IndividualCard from '../ui/IndividualCard';
 import Modal from '../ui/Modal';
 import IndividualForm from '../forms/IndividualForm';
 import ContributionForm from '../forms/ContributionForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
+import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import {
+  fetchIndividualsThunk,
+  addIndividualThunk,
+  addIndividualContributionThunk,
+  updateIndividualThunk,
+} from '../../store/actions/individualActions.js';
+import { useToast } from '../ui/useToast.js';
+import { useNavigate } from 'react-router-dom';
 
 const OthersList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const headerOffset = useHeaderOffset();
-  const [individuals, setIndividuals] = useState([
-    {
-      id: 1,
-      individualName: 'Alice Johnson',
-      houseName: 'Rose Villa',
-      place: 'Kottayam',
-      contactNumber: '9876543210',
-      totalAmount: 'Rs. 10,500',
-    },
-    {
-      id: 2,
-      individualName: 'Boby Mathew',
-      houseName: 'Green Meadows',
-      place: 'Ernakulam',
-      contactNumber: '9123456780',
-      totalAmount: 'Rs. 7,200',
-    },
-  ]);
+  const dispatch = useAppDispatch();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const {
+    items: individuals,
+    loading,
+    error,
+    loaded,
+  } = useAppSelector(state => state.individual);
+
+  useEffect(() => {
+    if (!loaded && !loading) {
+      dispatch(fetchIndividualsThunk());
+    }
+  }, [loaded, loading, dispatch]);
 
   // Top-right add modal state
   const [showAdd, setShowAdd] = useState(false);
@@ -45,40 +51,42 @@ const OthersList = () => {
     setContributionFor(id);
   };
 
-  const submitContribution = data => {
-    // data: { familyId, amount, notes, year }
-    if (!data || !data.amount) {
+  const submitContribution = async data => {
+    // Map contribution form to API payload
+    const payload = {
+      icon_ind_id: contributionFor,
+      icon_amount: Number(data.amount || 0),
+      icon_purpose: data.notes || '',
+    };
+    const action = await dispatch(addIndividualContributionThunk(payload));
+    if (action && action.meta && action.meta.requestStatus === 'fulfilled') {
+      showToast('Contribution added successfully', { type: 'success' });
+      // Refresh list to reflect updated totals
+      dispatch(fetchIndividualsThunk());
       setContributionFor(null);
-      return;
+    } else {
+      const msg = action?.payload || 'Failed to add contribution';
+      showToast(msg, { type: 'error' });
     }
-    setIndividuals(prev =>
-      prev.map(i => {
-        if (i.id === contributionFor) {
-          const existing =
-            parseInt(String(i.totalAmount).replace(/\D/g, ''), 10) || 0;
-          const add = Number(data.amount) || 0;
-          return {
-            ...i,
-            totalAmount:
-              'Rs. ' + new Intl.NumberFormat('en-IN').format(existing + add),
-          };
-        }
-        return i;
-      })
-    );
-    console.log('Added contribution (individual)', data);
-    setContributionFor(null);
   };
 
-  const submitNew = data => {
-    const nextId = individuals.length
-      ? Math.max(...individuals.map(i => i.id)) + 1
-      : 1;
-    setIndividuals(prev => [
-      ...prev,
-      { ...data, id: nextId, totalAmount: 'Rs. 0' },
-    ]);
-    setShowAdd(false);
+  const submitNew = async data => {
+    // Map UI form data to API contract
+    const payload = {
+      ind_full_name: (data.individualName || '').trim(),
+      ind_phone_number: (data.contactNumber || '').trim(),
+      ind_email: (data.email || '').trim(),
+      ind_address: [data.houseName, data.place].filter(Boolean).join(', '),
+      ind_total_contribution_amount: Number(data.totalAmount || 0),
+    };
+    const action = await dispatch(addIndividualThunk(payload));
+    if (action && action.meta && action.meta.requestStatus === 'fulfilled') {
+      showToast('Individual added successfully', { type: 'success' });
+      setShowAdd(false);
+    } else {
+      const msg = action?.payload || 'Failed to add individual';
+      showToast(msg, { type: 'error' });
+    }
   };
 
   const openEdit = id => {
@@ -86,11 +94,24 @@ const OthersList = () => {
     if (person) setEditingIndividual(person);
   };
 
-  const submitEdit = data => {
-    setIndividuals(prev =>
-      prev.map(i => (i.id === data.id ? { ...i, ...data } : i))
-    );
-    setEditingIndividual(null);
+  const submitEdit = async data => {
+    // data from IndividualForm
+    const payload = {
+      ind_id: data.id,
+      ind_full_name: (data.individualName || '').trim(),
+      ind_phone_number: (data.contactNumber || '').trim(),
+      ind_email: (data.email || '').trim(),
+      ind_address: [data.houseName, data.place].filter(Boolean).join(', '),
+    };
+    const action = await dispatch(updateIndividualThunk(payload));
+    if (action && action.meta && action.meta.requestStatus === 'fulfilled') {
+      showToast('Individual updated successfully', { type: 'success' });
+      setEditingIndividual(null);
+      dispatch(fetchIndividualsThunk());
+    } else {
+      const msg = action?.payload || 'Failed to update individual';
+      showToast(msg, { type: 'error' });
+    }
   };
 
   const openDelete = id => {
@@ -99,9 +120,7 @@ const OthersList = () => {
   };
 
   const confirmDelete = () => {
-    if (deletingIndividual) {
-      setIndividuals(prev => prev.filter(i => i.id !== deletingIndividual.id));
-    }
+    // TODO: integrate delete API when available
     setDeletingIndividual(null);
   };
 
@@ -130,6 +149,11 @@ const OthersList = () => {
             </button>
           </div>
         )}
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+            {error}
+          </div>
+        )}
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {filtered.map(i => (
@@ -137,6 +161,7 @@ const OthersList = () => {
                 key={i.id}
                 {...i}
                 onAddContribution={openAddContribution}
+                onVisit={id => navigate(`/others/individual/${id}/visit`)}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
@@ -159,6 +184,11 @@ const OthersList = () => {
             >
               &larr; Back
             </button>
+          </div>
+        )}
+        {loading && (
+          <div className="flex justify-center py-10">
+            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

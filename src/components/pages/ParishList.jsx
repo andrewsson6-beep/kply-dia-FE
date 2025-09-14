@@ -29,15 +29,23 @@ const ParishList = () => {
     if (!foraneLoaded && !foraneLoading) dispatch(fetchForanesThunk());
   }, [foraneLoaded, foraneLoading, dispatch]);
 
-  const foraneNameById = useMemo(() => {
-    const map = new Map();
-    (nameOptions || []).forEach(opt => map.set(opt.id, opt.name)); // opt also has location
-    return map;
-  }, [nameOptions]);
+  // const foraneNameById = useMemo(() => {
+  //   const map = new Map();
+  //   (nameOptions || []).forEach(opt => map.set(opt.id, opt.name)); // opt also has location
+  //   return map;
+  // }, [nameOptions]);
 
   const handleVisitParish = parishId => {
     navigate(`/parish/list/${parishId}/community/list`);
   };
+
+  const foraneNameById = useMemo(() => {
+    const map = new Map();
+    (nameOptions || []).forEach(opt =>
+      map.set(opt.id, `${opt.name}, ${opt.location}`)
+    );
+    return map;
+  }, [nameOptions]);
 
   return (
     <div className="p-4 sm:p-6" style={{ paddingTop: headerOffset }}>
@@ -49,10 +57,10 @@ const ParishList = () => {
         </div>
       )}
       <div className="space-y-6">
-        {items.map(c => (
+        {items.map((c, index) => (
           <ChurchCard
             key={c.id}
-            id={c.id}
+            id={index + 1}
             churchName={c.churchName}
             place={c.place}
             vicarName={c.vicarName}

@@ -30,7 +30,7 @@ const Modal = ({
   size = 'md',
   closeOnBackdrop = true,
   variant = 'center',
-  contentPointer = false,
+  // removed contentPointer – no longer needed
 }) => {
   const [mounted, setMounted] = React.useState(false);
   useEffect(() => {
@@ -65,6 +65,13 @@ const Modal = ({
             ? `relative z-10 w-full ${sizeClasses[size]} mx-auto max-h-full bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col`
             : `relative z-10 h-full w-full sm:w-[420px] md:w-[520px] bg-white shadow-xl border-l border-gray-200 flex flex-col transform transition-transform duration-300 ease-out ${mounted ? 'translate-x-0' : 'translate-x-full'}`,
         ].join(' ')}
+        onMouseDown={e => {
+          // Prevent backdrop from accidentally handling the same mousedown and stealing focus
+          e.stopPropagation();
+        }}
+        onClick={e => {
+          e.stopPropagation();
+        }}
       >
         <div
           className={`flex items-start justify-between ${centered ? 'rounded-t-2xl' : ''} px-4 sm:px-6 py-3 border-b border-gray-200`}
@@ -93,9 +100,7 @@ const Modal = ({
             </svg>
           </button>
         </div>
-        <div
-          className={`px-4 sm:px-6 py-4 overflow-y-auto flex-1 ${contentPointer ? 'cursor-pointer' : ''}`}
-        >
+        <div className={`px-4 sm:px-6 py-4 overflow-y-auto flex-1`}>
           {children}
         </div>
         {footer && (
@@ -108,7 +113,7 @@ const Modal = ({
       </div>
       {/* Backdrop (click area) */}
       {closeOnBackdrop && (
-        <button
+        <div
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 w-full h-full cursor-default z-0"

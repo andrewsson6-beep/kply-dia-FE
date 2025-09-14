@@ -21,6 +21,11 @@ export interface GenericReceiptField {
   label: string;
   value: string | number;
 }
+export interface ContributionItem {
+  date: string; // formatted date string
+  amount: string | number; // raw or formatted, will be formatted
+  // purpose?: string; // intentionally unused in PDF per current design
+}
 export interface GenericReceiptPayload {
   id: string | number;
   title: string; // main entity name (Family Name / Church Name / Name / Institution Name)
@@ -32,6 +37,8 @@ export interface GenericReceiptPayload {
   badgeText?: string; // default same donation receipt text
   generatedBy?: string;
   generatedAt?: Date;
+  contributionsTitle?: string; // default 'Contributions'
+  contributions?: ContributionItem[]; // optional list (will render Date & Amount columns only)
 }
 
 // Robust currency formatter handling inputs like "Rs. 50,000", "INR 75,250.5", 60000, etc.
@@ -73,6 +80,33 @@ const formatCurrency = (value: string | number) => {
 };
 
 const BASE_BADGE = 'MMT HOSPITAL DONATION RECEIPT';
+
+// Format dates as DD/MM/YYYY from common date/time strings
+const formatDateOnly = (value: string | Date): string => {
+  try {
+    const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
+    if (value instanceof Date) {
+      const d = value;
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    // Extract YYYY-MM-DD if present anywhere
+    const m = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      const [, y, mo, d] = m;
+      return `${d}/${mo}/${y}`;
+    }
+    // Try generic parse
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) {
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+    return raw;
+  } catch {
+    return String(value || '');
+  }
+};
 
 // Generic builder
 export const buildGenericReceiptPdf = (
@@ -134,17 +168,7 @@ export const buildGenericReceiptPdf = (
     cursorY += 18 + wrappedSub.length * 18 + 8;
   }
 
-  // Meta line
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(gray);
-  const metaParts = [
-    `Receipt ID: ENT-${payload.id}`,
-    `Generated: ${(payload.generatedAt || new Date()).toLocaleString()}`,
-    payload.generatedBy ? `By: ${payload.generatedBy}` : undefined,
-  ].filter(Boolean) as string[];
-  doc.text(metaParts.join('  •  '), marginX, cursorY);
-  cursorY += 28;
+  // (Meta moved to footer)
 
   // Divider
   doc.setDrawColor(primary);
@@ -184,8 +208,11 @@ export const buildGenericReceiptPdf = (
   });
   cursorY = y + 32;
 
-  // Total card
-  if (payload.totalValue !== undefined) {
+  // Total card (only when no contributions table is provided)
+  if (
+    payload.totalValue !== undefined &&
+    !(payload.contributions && payload.contributions.length)
+  ) {
     const totalCardY = cursorY;
     const totalCardHeight = 92;
     doc.setFillColor(accent);
@@ -211,14 +238,140 @@ export const buildGenericReceiptPdf = (
     cursorY = totalCardY + totalCardHeight + 40;
   }
 
-  // Footer
+  // Contributions table (optional): Date | Amount (no purpose/action)
+  const drawContributionsTable = (items: ContributionItem[]) => {
+    if (!items.length) return;
+    // Section title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(grayDark);
+    const title = payload.contributionsTitle || 'Contributions';
+    doc.text(title, marginX, cursorY);
+    cursorY += 18;
+
+    // Table header background
+    const headerHeight = 28;
+    const tableLeft = marginX;
+    const tableRight = pageWidth - marginX;
+    const tableWidth = tableRight - tableLeft;
+    doc.setFillColor('#f3f4f6');
+    doc.rect(tableLeft, cursorY, tableWidth, headerHeight, 'F');
+
+    // Header text
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(primary);
+    const dateColX = tableLeft + 12;
+    const amountColX = tableRight - 12; // right-aligned
+    doc.text('DATE', dateColX, cursorY + 18);
+    doc.text('AMOUNT', amountColX, cursorY + 18, { align: 'right' });
+    cursorY += headerHeight;
+
+    // Rows
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(grayDark);
+    const rowHeight = 24;
+    const bottomLimit = pageHeight - 72; // footer margin
+
+    items.forEach((it, idx) => {
+      // Page break check
+      if (cursorY + rowHeight > bottomLimit) {
+        doc.addPage();
+        cursorY = marginTop;
+        // Re-draw header on new page
+        doc.setFillColor('#f3f4f6');
+        doc.rect(tableLeft, cursorY, tableWidth, headerHeight, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(primary);
+        doc.text('DATE', dateColX, cursorY + 18);
+        doc.text('AMOUNT', amountColX, cursorY + 18, { align: 'right' });
+        cursorY += headerHeight;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(grayDark);
+      }
+
+      // zebra rows
+      if (idx % 2 === 1) {
+        doc.setFillColor('#fafafa');
+        doc.rect(tableLeft, cursorY, tableWidth, rowHeight, 'F');
+      }
+
+      const amountText = formatCurrency(it.amount);
+      const dateText = formatDateOnly(it.date as any);
+      doc.text(dateText, dateColX, cursorY + 16);
+      doc.text(amountText, amountColX, cursorY + 16, { align: 'right' });
+      cursorY += rowHeight;
+    });
+
+    // Total row (highlighted)
+    const totalVal =
+      payload.totalValue !== undefined
+        ? payload.totalValue
+        : items.reduce((sum, it) => {
+            const n =
+              typeof it.amount === 'number'
+                ? it.amount
+                : Number(String(it.amount).replace(/[^0-9.]/g, '')) || 0;
+            return sum + n;
+          }, 0);
+
+    const totalRowHeight = 28;
+    if (cursorY + totalRowHeight > bottomLimit) {
+      doc.addPage();
+      cursorY = marginTop;
+      // Re-draw header on new page
+      doc.setFillColor('#f3f4f6');
+      doc.rect(tableLeft, cursorY, tableWidth, headerHeight, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(primary);
+      doc.text('DATE', dateColX, cursorY + 18);
+      doc.text('AMOUNT', amountColX, cursorY + 18, { align: 'right' });
+      cursorY += headerHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(grayDark);
+    }
+
+    doc.setFillColor(accent);
+    doc.rect(tableLeft, cursorY, tableWidth, totalRowHeight, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor('#ffffff');
+    doc.text('TOTAL CONTRIBUTION', dateColX, cursorY + 18);
+    doc.text(formatCurrency(totalVal), amountColX, cursorY + 18, {
+      align: 'right',
+    });
+    cursorY += totalRowHeight + 24; // spacing after table
+  };
+
+  if (payload.contributions && payload.contributions.length) {
+    drawContributionsTable(payload.contributions);
+  }
+
+  // Footer (fixed at bottom): meta line + note
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(gray);
-  const footer =
+  const metaParts = [
+    `Receipt ID: ENT-${payload.id}`,
+    `Generated: ${(payload.generatedAt || new Date()).toLocaleString()}`,
+    payload.generatedBy ? `By: ${payload.generatedBy}` : undefined,
+  ].filter(Boolean) as string[];
+  const metaText = metaParts.join('  •  ');
+  const footerNote =
     'This is a system generated receipt. For queries contact the administrator.';
-  const wrappedFooter = doc.splitTextToSize(footer, pageWidth - marginX * 2);
-  doc.text(wrappedFooter, marginX, Math.min(cursorY, pageHeight - 72));
+  const footerNoteWrapped = doc.splitTextToSize(
+    footerNote,
+    pageWidth - marginX * 2
+  );
+  const footerMetaY = pageHeight - 60;
+  const footerNoteY = pageHeight - 40;
+  doc.text(metaText, marginX, footerMetaY);
+  doc.text(footerNoteWrapped, marginX, footerNoteY);
   return doc;
 };
 
