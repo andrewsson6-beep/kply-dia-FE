@@ -14,7 +14,6 @@ const InstitutionCard = ({
   administratorName,
   administratorContact,
   totalAmount,
-  imageUrl,
   onAddContribution,
   onEdit,
   onDelete,
@@ -62,23 +61,17 @@ const InstitutionCard = ({
 
   return (
     <div className={`overflow-hidden w-full ${className}`} style={cardStyle}>
-      <div className="flex flex-col sm:flex-row shadow-lg sm:shadow-none sm:items-stretch h-full p-3 sm:p-4 gap-3">
-        {/* Image */}
-        <div className="w-full h-56 rounded-2xl sm:shadow-lg sm:w-2/5 md:w-1/3 relative flex-shrink-0 overflow-hidden">
-          <img
-            src={imageUrl}
-            alt={institutionName}
-            className="w-full h-full object-cover"
-          />
+      <div className="flex flex-col shadow-lg sm:shadow-none sm:items-stretch h-full p-3 sm:p-4 gap-3">
+        {/* Details */}
+        <div className="relative flex-1 rounded-2xl shadow-lg p-4 overflow-hidden min-w-0 bg-white/80">
           {id && (
-            <div className="absolute top-3 left-3 bg-blue-500/90 backdrop-blur text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold shadow">
-              {id}
+            <div className="absolute top-3 left-3 z-10">
+              <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold shadow">
+                {id}
+              </div>
             </div>
           )}
-        </div>
-        {/* Details */}
-        <div className="flex-1 rounded-2xl shadow-lg p-4 overflow-hidden min-w-0 bg-white/80">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full border-2 border-blue-400 rounded-2xl p-3 bg-white/70">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full border-2 border-blue-400 rounded-2xl p-3 bg-white/70 pt-6 sm:pt-8">
             {/* Left Column */}
             <div className="space-y-2 flex flex-col ">
               <div className="flex-shrink-0">

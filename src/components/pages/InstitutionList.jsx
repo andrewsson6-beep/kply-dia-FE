@@ -23,7 +23,6 @@ function InstitutionList() {
       administratorName: 'Rev Fr Thomas Abraham',
       administratorContact: '1234567890',
       totalAmount: '2023400',
-      imageUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/...',
     },
     {
       id: 2,
@@ -36,7 +35,6 @@ function InstitutionList() {
       administratorName: 'Rev Fr Antony',
       administratorContact: '9876543210',
       totalAmount: '1523400',
-      imageUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/...',
     },
   ]);
 

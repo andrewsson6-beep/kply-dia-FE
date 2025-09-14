@@ -76,7 +76,6 @@ const ForaneList = () => {
             vicarName={c.vicarName}
             contactNumber={c.contactNumber}
             totalAmount={c.totalAmount}
-            imageUrl={c.imageUrl}
             onVisitParish={() => handleVisitForane(c.id)}
             visitLabel="VISIT FORANE"
             className="max-w-4xl mx-auto"

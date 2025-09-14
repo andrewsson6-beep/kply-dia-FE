@@ -19,7 +19,6 @@ const empty = {
   administratorName: '',
   administratorContact: '',
   totalAmount: '',
-  imageUrl: '',
 };
 
 const InstitutionForm = ({
@@ -29,8 +28,6 @@ const InstitutionForm = ({
   onCancel = () => {},
 }) => {
   const [form, setForm] = useState(initialData || empty);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(initialData?.imageUrl || '');
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,24 +53,7 @@ const InstitutionForm = ({
     setErrors(er => ({ ...er, [field]: undefined }));
   };
 
-  const handleImageChange = e => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = ev => {
-        setImagePreview(ev.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const clearImage = () => {
-    setImageFile(null);
-    setImagePreview('');
-    // retain existing form.imageUrl if editing and user doesn't explicitly clear? We'll clear completely.
-    setForm(f => ({ ...f, imageUrl: '' }));
-  };
+  // Image upload removed as it's no longer required
 
   const handleSubmit = e => {
     e.preventDefault();
@@ -86,8 +66,6 @@ const InstitutionForm = ({
         onSubmit({
           ...form,
           id: initialData?.id,
-          imageFile, // raw File object (if newly selected)
-          imageUrl: imagePreview || form.imageUrl || '', // data URL preview or existing
         });
       } else {
         console.warn('InstitutionForm: onSubmit prop is not a function');
@@ -230,42 +208,6 @@ const InstitutionForm = ({
             className={inputCls('')}
             placeholder="Eg: Rs. 10,000"
           />
-        </div>
-        {/* Image Upload (last field) */}
-        <div className="sm:col-span-2">
-          <label className={label}>
-            <span>Image (optional)</span>
-          </label>
-          <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <div className="flex-1 w-full">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-              />
-              <p className="text-[10px] text-gray-500 mt-1">
-                JPG, PNG up to ~2MB.
-              </p>
-            </div>
-            {(imagePreview || form.imageUrl) && (
-              <div className="relative group">
-                <img
-                  src={imagePreview || form.imageUrl}
-                  alt="Preview"
-                  className="w-32 h-32 object-cover rounded-lg border border-gray-300 shadow-sm"
-                />
-                <button
-                  type="button"
-                  onClick={clearImage}
-                  className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow opacity-90 hover:opacity-100 cursor-pointer transition"
-                  aria-label="Remove image"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 pt-2">

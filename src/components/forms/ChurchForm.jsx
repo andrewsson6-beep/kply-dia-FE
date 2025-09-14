@@ -17,12 +17,9 @@ const ChurchForm = ({
     vicarName: initialData.vicarName || '',
     contactNumber: initialData.contactNumber || '',
     totalAmount: initialData.totalAmount || '',
-    image: initialData.image || null,
     forane: initialData.forane || '',
     ...initialData,
   });
-
-  const [imagePreview, setImagePreview] = useState(initialData.imageUrl || '');
   const [errors, setErrors] = useState({});
 
   // Sync with new initialData in edit mode
@@ -35,10 +32,8 @@ const ChurchForm = ({
         vicarName: initialData.vicarName || '',
         contactNumber: initialData.contactNumber || '',
         totalAmount: initialData.totalAmount || '',
-        image: initialData.image || null,
         forane: initialData.forane || '',
       }));
-      if (initialData.imageUrl) setImagePreview(initialData.imageUrl);
     }
   }, [initialData, isEdit]);
 
@@ -64,49 +59,6 @@ const ChurchForm = ({
     }
   };
 
-  const handleImageChange = e => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({
-          ...prev,
-          image: 'Please select a valid image file',
-        }));
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({
-          ...prev,
-          image: 'Image size should be less than 5MB',
-        }));
-        return;
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        image: file,
-      }));
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Clear any previous image errors
-      if (errors.image) {
-        setErrors(prev => ({
-          ...prev,
-          image: '',
-        }));
-      }
-    }
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -119,7 +71,6 @@ const ChurchForm = ({
       newErrors.contactNumber = 'Contact number is required';
     if (!formData.totalAmount.trim())
       newErrors.totalAmount = 'Total amount is required';
-    // Image upload is optional; retain only file-type/size errors from handleImageChange
 
     // Validate forane if field is shown
     if (showForaneField && !formData.forane.trim()) {
@@ -154,10 +105,8 @@ const ChurchForm = ({
         vicarName: '',
         contactNumber: '',
         totalAmount: '',
-        image: null,
         forane: '',
       });
-      setImagePreview('');
       setErrors({});
     }
     onCancel && onCancel();
@@ -169,77 +118,9 @@ const ChurchForm = ({
       style={cardStyle}
     >
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
-          {/* Image Upload Section (optional) */}
-          <div className="w-full sm:w-2/5 md:w-1/3 relative flex-shrink-0">
-            <div className="h-32 sm:h-48 md:h-full min-h-[120px] sm:min-h-[200px]">
-              <div
-                className={`w-full h-full border-2 border-dashed rounded relative overflow-hidden ${
-                  errors.image
-                    ? 'border-red-400 bg-red-50'
-                    : 'border-gray-300 bg-gray-50'
-                }`}
-              >
-                {imagePreview ? (
-                  <>
-                    <img
-                      src={imagePreview}
-                      alt="Church preview"
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Overlay for re-upload */}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
-                      <label className="cursor-pointer bg-white text-gray-800 px-3 py-2 rounded-md text-xs sm:text-sm font-medium shadow-lg hover:bg-gray-100 transition-colors">
-                        Change Image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <label className="cursor-pointer text-center text-gray-500 hover:text-gray-700 transition-colors">
-                      <svg
-                        className="mx-auto h-8 w-8 sm:h-12 sm:w-12 mb-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      <p className="text-xs sm:text-sm font-medium">
-                        Add Image (optional)
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Click to upload
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
-              {errors.image && (
-                <p className="text-red-500 text-xs mt-1">{errors.image}</p>
-              )}
-            </div>
-          </div>
-
+        <div className="flex flex-col h-full p-3 sm:p-4 gap-3 sm:gap-4">
           {/* Form Fields */}
-          <div className="flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0 flex flex-col">
+          <div className="p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0 flex flex-col">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 flex-1">
               {/* Left Column */}
               <div className="space-y-2 flex flex-col">
