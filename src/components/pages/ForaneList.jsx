@@ -27,8 +27,10 @@ const ForaneList = () => {
   }, [selectedLetter, items]);
 
   const handleVisitForane = id => {
-    // Navigate to forane-specific community list (dedicated route)
-    navigate(`/forane/list/${id}/community/list`);
+    // Navigate to forane-specific parish list and provide a return target
+    navigate(`/forane/list/${id}/community/list`, {
+      state: { from: '/forane/list' },
+    });
   };
 
   return (

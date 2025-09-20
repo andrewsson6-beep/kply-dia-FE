@@ -276,6 +276,42 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  fetchParishesByForane: async forane_id => {
+    try {
+      const res = await axiosInstance.post('/all_forane_parishes', {
+        forane_id,
+      });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to load parishes for forane');
+      }
+      // Some backends return a string message when empty
+      const list = Array.isArray(data) ? data : [];
+      const items = list.map(row => ({
+        id: row.par_id,
+        churchName: row.par_name,
+        place: row.par_location,
+        vicarName: row.par_vicar_name || '',
+        contactNumber: row.par_contact_number || '',
+        totalAmount: formatINR(row.par_total_contribution_amount),
+        imageUrl: undefined,
+        foraneId: row.par_for_id,
+        code: row.par_code,
+      }));
+      return items;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load parishes for forane'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   addParish: async payload => {
     try {
       const res = await axiosInstance.post('/add-new-parish', payload);

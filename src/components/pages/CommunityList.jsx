@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import CommunityCard from '../ui/CommunityCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
@@ -16,6 +16,7 @@ const CommunityList = () => {
   const headerOffset = useHeaderOffset();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const dispatch = useAppDispatch();
   const [showAdd, setShowAdd] = useState(false);
@@ -33,6 +34,9 @@ const CommunityList = () => {
   };
 
   const handleBack = () => {
+    // Prefer an explicit back target if provided (e.g., coming from ForaneParishList)
+    const backTo = location.state?.backTo;
+    if (backTo) return navigate(backTo);
     if (inForaneContext) navigate('/forane/list');
     else navigate('/parish/list');
   };

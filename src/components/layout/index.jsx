@@ -12,6 +12,7 @@ import InstitutionVisit from '../pages/InstitutionVisit';
 import FamilyList from '../pages/FamilyList';
 import AddFamily from '../pages/AddFamily';
 import CommunityList from '../pages/CommunityList';
+import ForaneParishList from '../pages/ForaneParishList';
 import OthersList from '../pages/OthersList';
 import IndividualVisit from '../pages/IndividualVisit';
 import UserProfile from '../pages/UserProfile';
@@ -49,10 +50,10 @@ const Layout = () => {
           <Route path="/forane/add" element={<AddForane />} />
           <Route path="/parish/list" element={<ParishList />} />
           <Route path="/parish/add" element={<AddParish />} />
-          {/* Forane -> Community list (new dedicated route) */}
+          {/* Forane -> Parishes under this Forane */}
           <Route
             path="/forane/list/:foraneId/community/list"
-            element={<CommunityList />}
+            element={<ForaneParishList />}
           />
           <Route
             path="/forane/list/:foraneId/community/:communityId/visit"

@@ -22,3 +22,17 @@ export const addParishThunk = createAsyncThunk(
     }
   }
 );
+
+export const fetchParishesByForaneThunk = createAsyncThunk(
+  'parish/fetchByForane',
+  async (foraneId, { rejectWithValue }) => {
+    try {
+      return {
+        foraneId,
+        items: await domainApi.fetchParishesByForane(foraneId),
+      };
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to load forane parishes');
+    }
+  }
+);
