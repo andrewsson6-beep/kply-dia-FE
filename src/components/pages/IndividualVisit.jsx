@@ -41,12 +41,33 @@ const IndividualVisit = () => {
   const [editing, setEditing] = useState(null); // contribution row
   const [showEditIndividual, setShowEditIndividual] = useState(false);
 
-  const onAddSubmit = async ({ amount, notes }) => {
+  const toApiDate = (yyyyMmDd, baseDateTime) => {
+    const base = String(baseDateTime || '');
+    const m = base.match(/\d{4}-\d{2}-\d{2} (\d{2}:\d{2}:\d{2})/);
+    const time = m ? m[1] : '00:00:00';
+    return `${yyyyMmDd} ${time}`;
+  };
+  const toInputDate = raw => {
+    const s = String(raw || '');
+    const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const pad = n => (n < 10 ? `0${n}` : `${n}`);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+    const today = new Date();
+    const pad = n => (n < 10 ? `0${n}` : `${n}`);
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  };
+
+  const onAddSubmit = async ({ amount, notes, date }) => {
     try {
       await domainApi.addIndividualContribution({
         icon_ind_id: Number(individualId),
         icon_amount: Number(amount || 0),
         icon_purpose: notes || '',
+        icon_date: toApiDate(date),
       });
       showToast('Contribution added successfully', { type: 'success' });
       setShowAdd(false);
@@ -56,13 +77,13 @@ const IndividualVisit = () => {
     }
   };
 
-  const onEditSubmit = async ({ amount, notes }) => {
+  const onEditSubmit = async ({ amount, notes, date }) => {
     if (!editing) return;
     try {
       await domainApi.updateIndividualContribution({
         icon_id: editing.icon_id,
         icon_amount: Number(amount || 0),
-        icon_date: new Date().toISOString(),
+        icon_date: toApiDate(date, editing.icon_date),
         icon_purpose: notes || '',
       });
       showToast('Contribution updated successfully', { type: 'success' });
@@ -305,7 +326,7 @@ const IndividualVisit = () => {
             initialData={{
               amount: editing.icon_amount,
               notes: editing.icon_purpose,
-              year: new Date(editing.icon_date).getFullYear(),
+              date: toInputDate(editing.icon_date),
             }}
             onSubmit={onEditSubmit}
             onCancel={() => setEditing(null)}

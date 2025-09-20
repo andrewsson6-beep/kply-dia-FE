@@ -1,42 +1,41 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import InstitutionCard from '../ui/InstitutionCard';
 import Header from '../layout/Header';
 import Modal from '../ui/Modal';
 import InstitutionForm from '../forms/InstitutionForm';
 import ContributionForm from '../forms/ContributionForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
+import { useNavigate } from 'react-router-dom';
+import { domainApi } from '../../api/api.js';
+import { useToast } from '../ui/useToast.js';
 
 function InstitutionList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const headerOffset = useHeaderOffset();
+  const navigate = useNavigate();
 
   // Local sample data (would come from API)
-  const [institutions, setInstitutions] = useState([
-    {
-      id: 1,
-      institutionName: 'Marian College',
-      place: 'Kuttikanam',
-      managerName: 'Rev Fr Boby Alex Mannamplackal',
-      managerContact: '1234567890',
-      principalName: 'Prof Dr Ajimon George',
-      principalContact: '1234567890',
-      administratorName: 'Rev Fr Thomas Abraham',
-      administratorContact: '1234567890',
-      totalAmount: '2023400',
-    },
-    {
-      id: 2,
-      institutionName: 'St. Joseph Institute',
-      place: 'City Center',
-      managerName: 'Rev Fr John Doe',
-      managerContact: '9876543210',
-      principalName: 'Dr Maria Paul',
-      principalContact: '9876543210',
-      administratorName: 'Rev Fr Antony',
-      administratorContact: '9876543210',
-      totalAmount: '1523400',
-    },
-  ]);
+  const [institutions, setInstitutions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { showToast } = useToast();
+
+  const loadInstitutions = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const list = await domainApi.fetchInstitutions();
+      setInstitutions(list);
+    } catch (e) {
+      setError(e.message || 'Failed to load institutions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInstitutions();
+  }, []);
 
   // Modal states
   const [contributionFor, setContributionFor] = useState(null); // id
@@ -44,16 +43,18 @@ function InstitutionList() {
   const [deletingInstitution, setDeletingInstitution] = useState(null); // object
 
   const handleVisitInstitution = id => {
-    console.log('Visit Institution clicked', id);
+    navigate(`/institution/${id}/visit`);
   };
 
   // Contribution flow
   const openAddContribution = id => {
     setContributionFor(id);
   };
-  const submitContribution = data => {
-    console.log('Add contribution', data); // { familyId|institutionId? , amount, notes, year }
-    // TODO: integrate API
+  const submitContribution = async () => {
+    // TODO: integrate institution contribution API when available
+    showToast('Institution contribution API not integrated yet', {
+      type: 'info',
+    });
     setContributionFor(null);
   };
 
@@ -62,11 +63,9 @@ function InstitutionList() {
     const inst = institutions.find(i => i.id === id);
     if (inst) setEditingInstitution(inst);
   };
-  const submitEdit = data => {
-    console.log('Update institution', data);
-    setInstitutions(prev =>
-      prev.map(i => (i.id === data.id ? { ...i, ...data } : i))
-    );
+  const submitEdit = () => {
+    // TODO: integrate institution update API when available
+    showToast('Edit Institution not implemented', { type: 'info' });
     setEditingInstitution(null);
   };
 
@@ -97,12 +96,21 @@ function InstitutionList() {
       {/* Content wrapper: add enough top padding to clear fixed header height */}
       {/* Header offset handled by outer wrapper padding */}
       <div className="max-w-7xl mx-auto px-4 space-y-10">
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+            {error}
+          </div>
+        )}
+        {loading && (
+          <div className="flex justify-center py-10">
+            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-8">
           {institutions.map(i => (
             <InstitutionCard
               key={i.id}
               {...i}
-              totalAmount={`Rs. ${Intl.NumberFormat('en-IN').format(Number(i.totalAmount))}`}
               onVisit={() => handleVisitInstitution(i.id)}
               onAddContribution={openAddContribution}
               onEdit={openEdit}

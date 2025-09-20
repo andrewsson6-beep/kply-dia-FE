@@ -8,6 +8,7 @@ import ParishList from '../pages/ParishList';
 import AddParish from '../pages/AddParish';
 import InstitutionList from '../pages/InstitutionList';
 import AddInstitution from '../pages/AddInstitution';
+import InstitutionVisit from '../pages/InstitutionVisit';
 import FamilyList from '../pages/FamilyList';
 import AddFamily from '../pages/AddFamily';
 import CommunityList from '../pages/CommunityList';
@@ -59,6 +60,10 @@ const Layout = () => {
           />
           <Route path="/institution/list" element={<InstitutionList />} />
           <Route path="/institution/add" element={<AddInstitution />} />
+          <Route
+            path="/institution/:institutionId/visit"
+            element={<InstitutionVisit />}
+          />
           <Route path="/others" element={<OthersList />} />
           <Route
             path="/others/individual/:individualId/visit"

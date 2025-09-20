@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 /*
   ContributionForm
   Props:
-    onSubmit: (data) => void          // Called with { amount: number, notes: string, year: number }
+    onSubmit: (data) => void          // Called with { amount: number, notes: string, date: string(YYYY-MM-DD) }
     onCancel: () => void              // Called when user cancels
-    initialData?: { amount?: number|string, notes?: string, year?: number|string }
+    initialData?: { amount?: number|string, notes?: string, date?: string }
     familyId?: string | number        // Optional context (not used internally except echoing back)
     isEdit?: boolean                  // Controls button label
 
   Behavior:
-  - Validates amount > 0 & year (4-digit, within acceptable range)
+  - Validates amount > 0 & date provided (YYYY-MM-DD)
     - Notes optional
     - Resets on non-edit cancel
 */
@@ -22,11 +22,15 @@ const ContributionForm = ({
   familyId,
   isEdit = false,
 }) => {
-  const currentYear = new Date().getFullYear();
+  const todayInput = () => {
+    const d = new Date();
+    const pad = n => (n < 10 ? `0${n}` : `${n}`);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
   const [formData, setFormData] = useState({
     amount: initialData.amount || '',
     notes: initialData.notes || '',
-    year: initialData.year || currentYear,
+    date: initialData.date || todayInput(),
   });
   const [errors, setErrors] = useState({});
 
@@ -43,14 +47,11 @@ const ContributionForm = ({
     } else if (Number(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
     }
-    // Year validation: 4 digits and reasonable range
-    const yrNum = Number(formData.year);
-    if (!formData.year || isNaN(yrNum)) {
-      newErrors.year = 'Year is required';
-    } else if (!/^\d{4}$/.test(String(formData.year))) {
-      newErrors.year = 'Enter 4-digit year';
-    } else if (yrNum < 1900 || yrNum > currentYear + 1) {
-      newErrors.year = `Year must be between 1900 and ${currentYear + 1}`;
+    // Date validation: require YYYY-MM-DD
+    if (!formData.date) {
+      newErrors.date = 'Date is required';
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(String(formData.date))) {
+      newErrors.date = 'Invalid date';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -64,13 +65,13 @@ const ContributionForm = ({
         familyId,
         amount: Number(formData.amount),
         notes: formData.notes.trim(),
-        year: Number(formData.year),
+        date: formData.date,
       });
   };
 
   const handleCancel = () => {
     if (!isEdit) {
-      setFormData({ amount: '', notes: '', year: currentYear });
+      setFormData({ amount: '', notes: '', date: todayInput() });
       setErrors({});
     }
     onCancel && onCancel();
@@ -101,21 +102,20 @@ const ContributionForm = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Year*
+            Date*
             <input
-              type="number"
-              name="year"
-              value={formData.year}
+              type="date"
+              name="date"
+              value={formData.date}
               onChange={handleChange}
               className={`mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 ${
-                errors.year ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                errors.date ? 'border-red-400 bg-red-50' : 'border-gray-300'
               }`}
-              placeholder={currentYear.toString()}
               required
             />
           </label>
-          {errors.year && (
-            <p className="text-xs text-red-500 mt-1">{errors.year}</p>
+          {errors.date && (
+            <p className="text-xs text-red-500 mt-1">{errors.date}</p>
           )}
         </div>
         <div className="sm:col-span-2">
@@ -145,7 +145,7 @@ const ContributionForm = ({
           type="submit"
           className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400"
           disabled={
-            !formData.amount || Number(formData.amount) <= 0 || errors.year
+            !formData.amount || Number(formData.amount) <= 0 || errors.date
           }
         >
           {isEdit ? 'Update' : 'Add'}

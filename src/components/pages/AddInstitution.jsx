@@ -2,16 +2,33 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InstitutionForm from '../forms/InstitutionForm';
 import Header from '../layout/Header';
+import { domainApi } from '../../api/api.js';
+import { useToast } from '../ui/useToast.js';
 
 function AddInstitution() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const navigate = useNavigate();
 
-  const handleCreate = data => {
-    console.log('Create institution:', data);
-    // TODO: integrate API call then navigate
-    // Reset flow: navigate to list or clear form. Here we navigate to list.
-    navigate('/institution/list');
+  const { showToast } = useToast();
+
+  const handleCreate = async data => {
+    try {
+      const payload = {
+        ins_name: data.institutionName || '',
+        ins_type: '',
+        ins_address: [data.place].filter(Boolean).join(', '),
+        ins_phone: data.managerContact || '',
+        ins_email: '',
+        ins_website: '',
+        ins_head_name: data.managerName || '',
+        ins_total_contribution_amount: Number(data.totalAmount || 0),
+      };
+      await domainApi.addInstitution(payload);
+      showToast('Institution added successfully', { type: 'success' });
+      navigate('/institution/list');
+    } catch (e) {
+      showToast(e.message || 'Failed to add institution', { type: 'error' });
+    }
   };
 
   const handleCancel = () => {

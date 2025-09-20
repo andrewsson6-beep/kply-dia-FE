@@ -41,42 +41,30 @@ export interface GenericReceiptPayload {
   contributions?: ContributionItem[]; // optional list (will render Date & Amount columns only)
 }
 
-// Robust currency formatter handling inputs like "Rs. 50,000", "INR 75,250.5", 60000, etc.
-const formatCurrency = (value: string | number) => {
-  if (typeof value === 'number') {
-    return `Rs. ${value.toLocaleString('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+// Robust currency formatter handling inputs like "Rs. 50,000", "INR 75,250.5", 60000, null, undefined, etc.
+const formatCurrency = (value: string | number | null | undefined) => {
+  const formatNum = (n: number) =>
+    `Rs. ${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (value === null || value === undefined) return formatNum(0);
+  if (typeof value === 'number') return formatNum(value);
+
+  const raw = String(value ?? '').trim();
+  if (!raw) return formatNum(0);
+
+  // Remove common thousand separators first
+  let cleaned = raw.replace(/[\s,]/g, '');
+  // If multiple dots present, strip all non-digits to avoid mis-parse
+  if ((cleaned.match(/[.]/g) || []).length > 1) {
+    cleaned = cleaned.replace(/[^0-9]/g, '');
   }
-  const raw = value.toString().trim();
-  // Extract first numeric token with optional decimal part
-  const match = raw.match(
-    /\d{1,3}(?:[,\s]\d{2,3})*(?:[.,]\d+)?|\d+(?:[.,]\d+)?/
-  );
-  let numericStr = match ? match[0] : raw;
-  // Remove spaces and commas used as thousand separators
-  numericStr = numericStr.replace(/[ ,]/g, '');
-  // If both comma and dot appear, assume last dot/comma is decimal separator
-  // Normalize decimal separator to '.'
-  const decimalParts = numericStr.split(/[.]/g);
-  if (decimalParts.length > 2) {
-    // If something odd, fallback to stripping all non-digits
-    numericStr = numericStr.replace(/[^0-9]/g, '');
-  }
-  let num = Number(numericStr);
+  let num = Number(cleaned);
   if (isNaN(num)) {
-    // Fallback: remove non-digits and retry
-    const digitsOnly = raw.replace(/[^0-9]/g, '');
-    num = Number(digitsOnly || '0');
+    // Fallback: extract a simple numeric token
+    const m = cleaned.match(/\d+(?:\.\d+)?/);
+    num = Number(m ? m[0] : '0');
   }
-  // Avoid duplicate Rs prefix if original already had it (case-insensitive)
-  const alreadyPrefixed = /^\s*rs\.?/i.test(raw);
-  const formatted = num.toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${alreadyPrefixed ? 'Rs.' : 'Rs.'} ${formatted}`; // always unify style
+  return formatNum(Number.isFinite(num) ? num : 0);
 };
 
 const BASE_BADGE = 'MMT HOSPITAL DONATION RECEIPT';

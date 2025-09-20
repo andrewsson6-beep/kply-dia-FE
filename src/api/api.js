@@ -297,6 +297,182 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  fetchInstitutions: async () => {
+    try {
+      const res = await axiosInstance.get('/institution/institution-list');
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !Array.isArray(data)) {
+        throw new Error(msg || 'Failed to load institutions');
+      }
+      const items = data.map(row => {
+        const address = row.ins_address || '';
+        const parts = address
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+        const place = parts.length ? parts[parts.length - 1] : '';
+        return {
+          id: row.ins_id,
+          institutionName: row.ins_name,
+          place,
+          managerName: row.ins_head_name || '',
+          managerContact: row.ins_phone || '',
+          principalName: '',
+          principalContact: '',
+          administratorName: '',
+          administratorContact: '',
+          totalAmount: formatINR(row.ins_total_contribution_amount || 0),
+        };
+      });
+      return items;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load institutions'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addInstitution: async payload => {
+    try {
+      const res = await axiosInstance.post(
+        '/institution/add-new-institution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add institution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add institution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  fetchInstitutionDetails: async ins_id => {
+    try {
+      const res = await axiosInstance.post('/institution/institution-details', {
+        ins_id,
+      });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to load institution');
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load institution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addInstitutionContribution: async payload => {
+    // payload: { incon_ins_id, incon_amount, incon_purpose }
+    try {
+      const res = await axiosInstance.post(
+        '/institution/add-institution-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add contribution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateInstitutionContribution: async payload => {
+    // payload: { incon_id, incon_amount, incon_purpose }
+    try {
+      const res = await axiosInstance.post(
+        '/institution/update-institution-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update contribution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateInstitution: async payload => {
+    // payload: { ins_id, ins_name, ins_phone, ins_email, ins_address, ins_type, ins_website, ins_head_name, ins_total_contribution_amount? }
+    try {
+      const res = await axiosInstance.put('/institution', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update institution'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update institution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   addIndividual: async payload => {
     try {
       const res = await axiosInstance.post(
