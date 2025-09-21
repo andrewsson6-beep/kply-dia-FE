@@ -24,3 +24,15 @@ export const addCommunityThunk = createAsyncThunk(
     }
   }
 );
+
+export const updateCommunityThunk = createAsyncThunk(
+  'community/update',
+  async ({ parentType, parentId, payload }, { rejectWithValue }) => {
+    try {
+      const updated = await domainApi.updateCommunity(payload);
+      return { parentType, parentId, updated };
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to update community');
+    }
+  }
+);

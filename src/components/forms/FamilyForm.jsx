@@ -35,12 +35,14 @@ const FamilyForm = ({
   height = 'auto',
   width = '100%',
   className = '',
-  communityOptions = [], // new: array of strings or {value,label}
+  communityOptions = [], // kept for backward compat; hidden in create flow with context
+  // context for create mode to lock community selection
+  communityContext,
 }) => {
   const [formData, setFormData] = useState({
     familyName: initialData.familyName || '',
     familyHead: initialData.familyHead || '',
-    community: initialData.community || '',
+    community: initialData.community || communityContext || '',
     contactNumber: initialData.contactNumber || '',
     totalAmount: initialData.totalAmount || '',
   });
@@ -67,12 +69,17 @@ const FamilyForm = ({
       newErrors.familyName = 'Family name is required';
     if (!formData.familyHead.trim())
       newErrors.familyHead = 'Family head is required';
-    if (!formData.community.trim())
+    if (!isEdit && communityContext) {
+      // In create mode with context, community is fixed; no validation needed
+    } else if (!formData.community.trim()) {
       newErrors.community = 'Community is required';
+    }
     if (!formData.contactNumber.trim())
       newErrors.contactNumber = 'Contact number is required';
-    if (!formData.totalAmount.toString().trim())
-      newErrors.totalAmount = 'Total amount is required';
+    if (isEdit) {
+      if (!formData.totalAmount.toString().trim())
+        newErrors.totalAmount = 'Total amount is required';
+    }
 
     // Basic phone number validation (allow digits, spaces, dashes, parentheses but must result in 10 digits)
     if (
@@ -170,43 +177,53 @@ const FamilyForm = ({
               <div className="space-y-2 flex flex-col">
                 <div className="flex-shrink-0">
                   <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                    Community*
+                    Community{!communityContext ? '*' : ''}
                   </label>
-                  <select
-                    name="community"
-                    value={formData.community}
-                    onChange={handleInputChange}
-                    className={`w-full bg-gray-100 rounded-md p-2 pr-8 text-gray-800 text-xs sm:text-sm border ${
-                      errors.community
-                        ? 'border-red-400 bg-red-50'
-                        : 'border-transparent focus:border-blue-400'
-                    } focus:outline-none focus:bg-white transition-colors appearance-none`}
-                  >
-                    <option value="">Select community</option>
-                    {(() => {
-                      // Normalize options to {value,label}
-                      const normalized = communityOptions.map(opt =>
-                        typeof opt === 'string'
-                          ? { value: opt, label: opt }
-                          : { value: opt.value, label: opt.label || opt.value }
-                      );
-                      // Ensure current value present if editing and not in list
-                      if (
-                        formData.community &&
-                        !normalized.some(o => o.value === formData.community)
-                      ) {
-                        normalized.push({
-                          value: formData.community,
-                          label: formData.community,
-                        });
-                      }
-                      return normalized.map(o => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ));
-                    })()}
-                  </select>
+                  {communityContext ? (
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.community}
+                      className="w-full bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm border border-transparent focus:outline-none"
+                    />
+                  ) : (
+                    <select
+                      name="community"
+                      value={formData.community}
+                      onChange={handleInputChange}
+                      className={`w-full bg-gray-100 rounded-md p-2 pr-8 text-gray-800 text-xs sm:text-sm border ${
+                        errors.community
+                          ? 'border-red-400 bg-red-50'
+                          : 'border-transparent focus:border-blue-400'
+                      } focus:outline-none focus:bg-white transition-colors appearance-none`}
+                    >
+                      <option value="">Select community</option>
+                      {(() => {
+                        const normalized = communityOptions.map(opt =>
+                          typeof opt === 'string'
+                            ? { value: opt, label: opt }
+                            : {
+                                value: opt.value,
+                                label: opt.label || opt.value,
+                              }
+                        );
+                        if (
+                          formData.community &&
+                          !normalized.some(o => o.value === formData.community)
+                        ) {
+                          normalized.push({
+                            value: formData.community,
+                            label: formData.community,
+                          });
+                        }
+                        return normalized.map(o => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ));
+                      })()}
+                    </select>
+                  )}
                   {errors.community && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.community}
@@ -237,10 +254,10 @@ const FamilyForm = ({
                   )}
                 </div>
 
-                {/* Mobile: Total Amount */}
+                {/* Mobile: Total Amount (required only in edit mode) */}
                 <div className="flex-shrink-0 sm:hidden">
                   <label className="text-blue-500 font-medium text-xs mb-1 block">
-                    Total Amount*
+                    Total Amount{isEdit ? '*' : ''}
                   </label>
                   <input
                     type="text"
@@ -261,11 +278,11 @@ const FamilyForm = ({
                   )}
                 </div>
 
-                {/* Desktop: Total Amount */}
+                {/* Desktop: Total Amount (required only in edit mode) */}
                 <div className="hidden sm:flex flex-1 items-end">
                   <div className="w-full">
                     <label className="text-blue-500 font-medium text-sm mb-1 block">
-                      Total Amount*
+                      Total Amount{isEdit ? '*' : ''}
                     </label>
                     <input
                       type="text"

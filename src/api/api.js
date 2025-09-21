@@ -6,9 +6,15 @@ const API_BASE_URL =
   'http://localhost:8000';
 
 // Token accessor (injected from store setup)
-let getTokens = () => ({ accessToken: null });
+let getTokens = () => ({ accessToken: null, sessionUuid: null });
 export const setTokenAccessor = fn => {
   getTokens = fn;
+};
+
+// Unauthorized handler to be provided by store setup
+let onUnauthorized = null;
+export const setUnauthorizedHandler = fn => {
+  onUnauthorized = fn;
 };
 
 // Axios instance (all non-auth requests add bearer automatically)
@@ -18,15 +24,46 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(config => {
-  const { accessToken } = getTokens() || {};
-  if (accessToken && !config.headers?.Authorization) {
+  const { accessToken, sessionUuid } = getTokens() || {};
+  // Avoid sending any mock/dev tokens to real backend
+  const isMockToken =
+    typeof accessToken === 'string' &&
+    accessToken.startsWith('mock-jwt-token-');
+  if (accessToken && !isMockToken && !config.headers?.Authorization) {
     config.headers = {
       ...config.headers,
       Authorization: `Bearer ${accessToken}`,
     };
   }
+  if (sessionUuid && !config.headers?.session_uuid) {
+    config.headers = {
+      ...config.headers,
+      session_uuid: sessionUuid,
+    };
+  }
   return config;
 });
+
+axiosInstance.interceptors.response.use(
+  response => response,
+  error => {
+    const res = error.response;
+    const msg = res?.data?.msg || res?.data?.data || error.message || '';
+    const code = res?.data?.code;
+    if (
+      res?.status === 401 ||
+      code === 401 ||
+      /token invalid/i.test(String(msg))
+    ) {
+      try {
+        onUnauthorized && onUnauthorized();
+      } catch {
+        // no-op
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // --- Mock helpers ---------------------------------------------------------
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -35,17 +72,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // (removed mockParishes; real API in use)
 
-// Communities by parent key `${type}:${id}`
-const mockCommunities = {};
-const ensureCommunitySeed = parentKey => {
-  if (!mockCommunities[parentKey]) {
-    mockCommunities[parentKey] = [
-      { id: 1, number: 1, name: 'St Bartholomew' },
-      { id: 2, number: 2, name: 'St Evaparasiamma' },
-      { id: 3, number: 3, name: 'St Thomas' },
-    ];
-  }
-};
+// (removed mockCommunities; real communities API in use)
 
 // Families per community id
 const mockFamilies = {
@@ -684,54 +711,249 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  updateCommunity: async payload => {
+    // payload: { com_id, com_name?, com_total_contribution_amount?, com_updated_by }
+    try {
+      const res = await axiosInstance.post('/update-community', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update community'
+        );
+      }
+      // If API returns object data, map to UI model; otherwise return minimal info
+      if (data && typeof data === 'object') {
+        return {
+          id: data.com_id,
+          number: data.com_unique_no,
+          name: data.com_name,
+          code: data.com_code,
+          parishId: data.com_par_id,
+          foraneId: data.com_for_id,
+          totalAmount: formatINR(data.com_total_contribution_amount || 0),
+        };
+      }
+      // Fallback: just echo back the changed fields we know
+      return {
+        id: payload.com_id,
+        name: payload.com_name,
+        totalAmount:
+          payload.com_total_contribution_amount !== undefined
+            ? formatINR(payload.com_total_contribution_amount)
+            : undefined,
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update community'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  fetchCommunityDetails: async com_id => {
+    try {
+      const res = await axiosInstance.post('/community-details', { com_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to load community');
+      }
+      // Map to UI model similar to fetchCommunities
+      return {
+        id: data.com_id,
+        number: data.com_unique_no,
+        name: data.com_name,
+        code: data.com_code,
+        parishId: data.com_par_id,
+        foraneId: data.com_for_id,
+        totalAmount: formatINR(data.com_total_contribution_amount || 0),
+        families: Array.isArray(data.families) ? data.families : [],
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load community'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchCommunities: async (parentType, parentId) => {
-    await delay(400);
-    const key = `${parentType}:${parentId}`;
-    ensureCommunitySeed(key);
-    return [...mockCommunities[key]];
+    // Currently supported only for parish context
+    console.log('parentType, parentid', parentType, parentId);
+    if (parentType !== 'parish') {
+      throw new Error('Communities can only be fetched for a parish');
+    }
+    try {
+      const res = await axiosInstance.post('/community-list', {
+        parish_id: parentId,
+      });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !Array.isArray(data)) {
+        throw new Error(msg || 'Failed to load communities');
+      }
+      // Map API rows to UI model
+      const items = data.map(row => ({
+        id: row.com_id,
+        number: row.com_unique_no,
+        name: row.com_name,
+        code: row.com_code,
+        parishId: row.com_par_id,
+        foraneId: row.com_for_id,
+        totalAmount: formatINR(row.com_total_contribution_amount || 0),
+        createdAt: row.com_created_at,
+        createdBy: row.com_created_by,
+      }));
+      return items;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to load communities'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   addCommunity: async (parentType, parentId, data) => {
-    await delay(400);
-    const key = `${parentType}:${parentId}`;
-    ensureCommunitySeed(key);
-    const list = mockCommunities[key];
-    const nextId = list.length ? Math.max(...list.map(c => c.id)) + 1 : 1;
-    const number =
-      data.number ||
-      (list.length ? Math.max(...list.map(c => c.number)) + 1 : 1);
-    const created = { id: nextId, number, name: data.name };
-    list.push(created);
-    return created;
+    if (parentType !== 'parish') {
+      throw new Error('Communities can only be added under a parish');
+    }
+    try {
+      const payload = {
+        com_par_id: parentId,
+        // accept either UI field `name` or API-shaped `com_name`
+        com_name: (data?.com_name || data?.name || '').trim(),
+      };
+      const res = await axiosInstance.post('/create-new-community', payload);
+      const { code, data: resp, msg } = res.data || {};
+      if (code !== 200 || !resp) {
+        throw new Error(
+          (typeof resp === 'string' && resp) || msg || 'Failed to add community'
+        );
+      }
+      // Map created record to UI model
+      return {
+        id: resp.com_id,
+        number: resp.com_unique_no,
+        name: resp.com_name,
+        code: resp.com_code,
+        parishId: resp.com_par_id,
+        foraneId: resp.com_for_id,
+        totalAmount: formatINR(resp.com_total_contribution_amount || 0),
+        createdAt: resp.com_created_at,
+        createdBy: resp.com_created_by,
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to add community'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   fetchFamilies: async communityId => {
     await delay(400);
     return [...(mockFamilies[communityId] || [])];
   },
   addFamily: async (communityId, data) => {
-    await delay(400);
-    if (!mockFamilies[communityId]) mockFamilies[communityId] = [];
-    const list = mockFamilies[communityId];
-    const nextId = list.length ? Math.max(...list.map(f => f.id)) + 1 : 1;
-    const created = {
-      id: nextId,
-      familyName: data.familyName,
-      community: data.community,
-      familyHead: data.familyHead,
-      contactNumber: data.contactNumber,
-      totalAmount: data.totalAmount || 'Rs. 0',
-    };
-    list.push(created);
-    return created;
-  },
-  updateFamily: async (communityId, data) => {
-    await delay(400);
-    const list = mockFamilies[communityId] || [];
-    const idx = list.findIndex(f => f.id === data.id);
-    if (idx !== -1) {
-      list[idx] = { ...list[idx], ...data };
-      return list[idx];
+    // Real API: create-new-family
+    try {
+      const payload = {
+        fam_com_id: communityId,
+        fam_house_name: (data.familyName || '').trim(),
+        fam_head_name: (data.familyHead || '').trim(),
+        fam_phone_number: (data.contactNumber || '').trim(),
+      };
+      const res = await axiosInstance.post('/create-new-family', payload);
+      const { code, data: resp, msg } = res.data || {};
+      if (code !== 200 || !resp) {
+        throw new Error(
+          (typeof resp === 'string' && resp) || msg || 'Failed to add family'
+        );
+      }
+      // Map response to UI model
+      return {
+        id: resp.fam_id,
+        familyName: resp.fam_house_name,
+        community: '',
+        familyHead: resp.fam_head_name,
+        contactNumber: resp.fam_phone_number || '',
+        totalAmount: formatINR(resp.fam_total_contribution_amount || 0),
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data: d, msg } = res.data;
+        throw new Error(
+          (typeof d === 'string' && d) || msg || 'Failed to add family'
+        );
+      }
+      throw new Error(error.message || 'Network error');
     }
-    throw new Error('Family not found');
+  },
+  updateFamily: async (communityIdOrPayload, maybeData) => {
+    try {
+      // Support legacy signature (communityId, data) and new (payload)
+      const data = maybeData || communityIdOrPayload;
+      const payload = {
+        fam_id: data.id ?? data.fam_id,
+        fam_house_name: (data.familyName ?? data.fam_house_name ?? '').trim(),
+        fam_head_name: (data.familyHead ?? data.fam_head_name ?? '').trim(),
+        fam_phone_number: (
+          data.contactNumber ??
+          data.fam_phone_number ??
+          ''
+        ).trim(),
+        fam_total_contribution_amount: Number(
+          typeof data.totalAmount === 'number'
+            ? data.totalAmount
+            : String(
+                data.totalAmount ?? data.fam_total_contribution_amount ?? '0'
+              ).replace(/[^0-9.]/g, '') || 0
+        ),
+      };
+      const res = await axiosInstance.post('/update-family', payload);
+      const { code, data: resp, msg } = res.data || {};
+      if (code !== 200 || !resp) {
+        throw new Error(
+          (typeof resp === 'string' && resp) || msg || 'Failed to update family'
+        );
+      }
+      return {
+        id: resp.fam_id,
+        familyName: resp.fam_house_name,
+        community: '',
+        familyHead: resp.fam_head_name,
+        contactNumber: resp.fam_phone_number || '',
+        totalAmount: formatINR(resp.fam_total_contribution_amount || 0),
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update family'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
   deleteFamily: async (communityId, id) => {
     await delay(300);
@@ -755,6 +977,107 @@ export const domainApi = {
       return { ...fam };
     }
     throw new Error('Family not found');
+  },
+  fetchFamilyDetails: async fam_id => {
+    try {
+      const res = await axiosInstance.post('/family-details', { fam_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to load family');
+      }
+      return {
+        id: data.fam_id,
+        code: data.fam_code,
+        houseName: data.fam_house_name,
+        headName: data.fam_head_name,
+        phoneNumber: data.fam_phone_number,
+        totalAmount: formatINR(data.fam_total_contribution_amount || 0),
+        totalAmountRaw:
+          Number(
+            String(data.fam_total_contribution_amount || 0).replace(
+              /[^0-9.]/g,
+              ''
+            )
+          ) || 0,
+        contributions: Array.isArray(data.contributions)
+          ? data.contributions.map(r => ({
+              id: r.fcon_id,
+              amount: r.fcon_amount,
+              date: r.fcon_date,
+              purpose: r.fcon_purpose || '',
+            }))
+          : [],
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to load family'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  addFamilyContribution: async payload => {
+    try {
+      // payload: { fcon_fam_id, fcon_amount, fcon_purpose }
+      const res = await axiosInstance.post('/add-family-contribution', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to add family contribution');
+      }
+      // Return normalized contribution row
+      return {
+        id: data.fcon_id,
+        famId: data.fcon_fam_id,
+        amount: data.fcon_amount,
+        date: data.fcon_date,
+        purpose: data.fcon_purpose || '',
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to add family contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateFamilyContribution: async payload => {
+    try {
+      // payload: { fcon_id, fcon_amount, fcon_purpose }
+      const res = await axiosInstance.post(
+        '/update-family-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to update family contribution');
+      }
+      return {
+        id: data.fcon_id,
+        famId: data.fcon_fam_id,
+        amount: data.fcon_amount,
+        date: data.fcon_date,
+        purpose: data.fcon_purpose || '',
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to update family contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
   },
 };
 

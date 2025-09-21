@@ -53,10 +53,13 @@ export const addContributionThunk = createAsyncThunk(
   'family/addContribution',
   async ({ communityId, familyId, amount }, { rejectWithValue }) => {
     try {
-      const updated = await domainApi.addContribution(communityId, familyId, {
-        amount,
+      // Call real API for family contribution
+      const row = await domainApi.addFamilyContribution({
+        fcon_fam_id: familyId,
+        fcon_amount: Number(amount || 0),
+        fcon_purpose: '',
       });
-      return { communityId, updated };
+      return { communityId, row };
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to add contribution');
     }

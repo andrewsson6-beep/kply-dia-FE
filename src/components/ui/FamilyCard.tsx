@@ -12,6 +12,7 @@ interface FamilyCardProps {
   onEdit: (id: number | string) => void;
   onDelete: (id: number | string) => void;
   onAddContribution: (id: number | string) => void;
+  onVisit?: (id: number | string) => void;
   height?: string;
   width?: string;
   className?: string;
@@ -29,6 +30,7 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
   onEdit,
   onDelete,
   onAddContribution,
+  onVisit,
   height = 'auto',
   width = '100%',
   className = '',
@@ -133,10 +135,30 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
               {/* Mobile action buttons */}
               <div className="flex-shrink-0 sm:hidden flex gap-2">
                 <button
-                  onClick={() => onAddContribution(id)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-md cursor-pointer transition-all duration-200 ease-out shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-[10px]"
+                  onClick={() => onVisit && onVisit(id)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md cursor-pointer transition-all duration-200 ease-out shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-[10px]"
                 >
-                  ADD CONTRIBUTION
+                  VISIT FAMILY
+                </button>
+                <button
+                  onClick={() => onAddContribution(id)}
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  aria-label="Add contribution"
+                  title="Add contribution"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
                 </button>
                 <button
                   onClick={() => onEdit(id)}
@@ -200,12 +222,32 @@ const FamilyCard: React.FC<FamilyCardProps> = ({
             {/* Desktop actions */}
             <div className="hidden sm:flex sm:col-span-2 items-center justify-between gap-3 mt-2">
               <button
-                onClick={() => onAddContribution(id)}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md cursor-pointer transition-all duration-200 ease-out shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                onClick={() => onVisit && onVisit(id)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md cursor-pointer transition-all duration-200 ease-out shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
               >
-                ADD CONTRIBUTION
+                VISIT FAMILY
               </button>
               <div className="flex gap-2">
+                <button
+                  onClick={() => onAddContribution(id)}
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  aria-label="Add contribution"
+                  title="Add contribution"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </button>
                 <button
                   onClick={() => onEdit(id)}
                   className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-400"

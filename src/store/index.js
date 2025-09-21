@@ -19,7 +19,8 @@ import parishReducer from './slices/parishSlice.js';
 import communityReducer from './slices/communitySlice.js';
 import familyReducer from './slices/familySlice.js';
 import individualReducer from './slices/individualSlice.js';
-import { setTokenAccessor } from '../api/api.js';
+import { setTokenAccessor, setUnauthorizedHandler } from '../api/api.js';
+import { clearAuth } from './slices/authSlice.js';
 
 // Persist only auth slice (selected fields)
 const authPersistConfig = {
@@ -62,15 +63,32 @@ export const persistor = persistStore(store);
 // Provide token accessor to API layer
 setTokenAccessor(() => {
   const state = store.getState();
-  const { accessToken, tokenExpiresAt } = state.auth || {};
-  if (!accessToken) return { accessToken: null };
+  const { accessToken, tokenExpiresAt, sessionUuid } = state.auth || {};
+  if (!accessToken) return { accessToken: null, sessionUuid: null };
   if (tokenExpiresAt) {
     const ms = Date.parse(tokenExpiresAt.replace(' ', 'T'));
     if (!Number.isNaN(ms) && Date.now() >= ms) {
-      return { accessToken: null };
+      return { accessToken: null, sessionUuid: null };
     }
   }
-  return { accessToken };
+  return { accessToken, sessionUuid };
+});
+
+// Clear auth on unauthorized responses
+setUnauthorizedHandler(() => {
+  // Dispatching directly avoids circular import issues
+  store.dispatch(clearAuth());
+});
+
+// After rehydration, if a mock token slipped into persisted state, clear it
+persistor.subscribe(() => {
+  const { bootstrapped } = persistor.getState() || {};
+  if (!bootstrapped) return;
+  const state = store.getState();
+  const token = state?.auth?.accessToken;
+  if (typeof token === 'string' && token.startsWith('mock-jwt-token-')) {
+    store.dispatch(clearAuth());
+  }
 });
 
 // Export default store

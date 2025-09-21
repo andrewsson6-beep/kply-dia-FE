@@ -5,13 +5,13 @@ import Modal from '../ui/Modal';
 import FamilyForm from '../forms/FamilyForm';
 import ContributionForm from '../forms/ContributionForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
-import { useParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAppDispatch } from '../../store/hooks.js';
+import { domainApi } from '../../api/api.js';
 import {
   addContributionThunk,
   addFamilyThunk,
   deleteFamilyThunk,
-  fetchFamiliesThunk,
   updateFamilyThunk,
 } from '../../store/actions/familyActions.js';
 
@@ -20,17 +20,13 @@ function FamilyList() {
   const headerOffset = useHeaderOffset();
 
   const dispatch = useAppDispatch();
-  const { communityId } = useParams();
+  const navigate = useNavigate();
+  const { communityId, parishId, foraneId } = useParams();
   const cid = Number(communityId);
-  const famState = useAppSelector(
-    state =>
-      state.family.byCommunity[cid] || {
-        items: [],
-        loading: false,
-        error: null,
-      }
-  );
-  const { items: families, loading, error } = famState;
+  const [families, setFamilies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [communityName, setCommunityName] = useState('');
 
   const [contributionFor, setContributionFor] = useState(null); // family id | null
   const [editingFamily, setEditingFamily] = useState(null); // family object | null
@@ -41,6 +37,17 @@ function FamilyList() {
   );
 
   const handleAddContribution = id => setContributionFor(id);
+
+  const handleVisit = id => {
+    if (parishId) {
+      navigate(`/parish/list/${parishId}/community/${cid}/family/${id}/visit`);
+    } else if (foraneId) {
+      navigate(`/forane/list/${foraneId}/community/${cid}/family/${id}/visit`);
+    } else {
+      // Fallback: try parish-based path
+      navigate(`/parish/list/0/community/${cid}/family/${id}/visit`);
+    }
+  };
 
   const handleSubmitContribution = data => {
     dispatch(
@@ -60,6 +67,10 @@ function FamilyList() {
 
   const submitEdit = data => {
     dispatch(updateFamilyThunk({ communityId: cid, data }));
+    // Optimistically update local list (mock update)
+    setFamilies(prev =>
+      prev.map(f => (f.id === data.id ? { ...f, ...data } : f))
+    );
     setEditingFamily(null);
   };
 
@@ -71,19 +82,48 @@ function FamilyList() {
   const confirmDelete = () => {
     if (deletingFamily)
       dispatch(deleteFamilyThunk({ communityId: cid, id: deletingFamily.id }));
+    // Optimistically update local list (mock delete)
+    setFamilies(prev => prev.filter(f => f.id !== deletingFamily?.id));
     setDeletingFamily(null);
   };
 
   const submitAdd = data => {
-    dispatch(addFamilyThunk({ communityId: cid, data }));
+    dispatch(addFamilyThunk({ communityId: cid, data })).finally(() => {
+      // Refresh from backend so the newly created family appears
+      reloadFromCommunityDetails();
+    });
     setShowAdd(false);
   };
 
-  // Filter by selected letter (familyName)
+  const formatINR = n => `Rs. ${Number(n || 0).toLocaleString('en-IN')}`;
+  const reloadFromCommunityDetails = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const details = await domainApi.fetchCommunityDetails(cid);
+      setCommunityName(details?.name || `Community #${cid}`);
+      const fams = Array.isArray(details?.families) ? details.families : [];
+      const mapped = fams.map(row => ({
+        id: row.fam_id,
+        familyName: row.fam_house_name,
+        community: details?.name || `Community #${cid}`,
+        familyHead: row.fam_head_name,
+        contactNumber: row.fam_phone_number,
+        totalAmount: formatINR(row.fam_total_contribution_amount || 0),
+      }));
+      setFamilies(mapped);
+    } catch (e) {
+      setError(e.message || 'Failed to load families');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load from community-details (families + name)
   useEffect(() => {
-    if (cid && !famState.loaded && !loading)
-      dispatch(fetchFamiliesThunk({ communityId: cid }));
-  }, [cid, famState.loaded, loading, dispatch]);
+    reloadFromCommunityDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cid]);
 
   const filteredFamilies = useMemo(
     () =>
@@ -95,6 +135,12 @@ function FamilyList() {
     [families, selectedLetter]
   );
 
+  // Derive header info (we currently don't have community name; show IDs)
+  const headerInfo = {
+    title: 'Community Families',
+    subtitle: communityName ? communityName : `Community #${cid}`,
+  };
+
   return (
     <div style={{ paddingTop: headerOffset }}>
       <Header
@@ -103,6 +149,7 @@ function FamilyList() {
           setSelectedLetter(ltr); // ltr will be null when toggled off
           console.log('Selected letter:', ltr);
         }}
+        headerInfo={headerInfo}
       />
 
       {/* Header offset handled by parent padding; remove mt-16 */}
@@ -135,13 +182,14 @@ function FamilyList() {
                 key={f.id}
                 id={f.id}
                 familyName={f.familyName}
-                community={f.community}
+                community={communityName || f.community}
                 familyHead={f.familyHead}
                 contactNumber={f.contactNumber}
                 totalAmount={f.totalAmount}
                 onDelete={openDelete}
                 onEdit={openEdit}
                 onAddContribution={handleAddContribution}
+                onVisit={handleVisit}
               />
             ))}
           </div>
@@ -226,6 +274,7 @@ function FamilyList() {
           onSubmit={submitAdd}
           onCancel={() => setShowAdd(false)}
           communityOptions={communityOptions}
+          communityContext={communityName || `Community #${cid}`}
         />
       </Modal>
 

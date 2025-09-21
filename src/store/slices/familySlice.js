@@ -68,13 +68,9 @@ const familySlice = createSlice({
           communityId
         ].items.filter(f => f.id !== id);
       })
-      .addCase(addContributionThunk.fulfilled, (state, action) => {
-        const { communityId, updated } = action.payload;
-        ensureCommunity(state, communityId);
-        const idx = state.byCommunity[communityId].items.findIndex(
-          f => f.id === updated.id
-        );
-        if (idx !== -1) state.byCommunity[communityId].items[idx] = updated;
+      .addCase(addContributionThunk.fulfilled, () => {
+        // We no longer update local totals here since UI reloads from backend
+        // after adding a contribution; keep this no-op for now.
       });
   },
 });

@@ -16,6 +16,8 @@ import ForaneParishList from '../pages/ForaneParishList';
 import OthersList from '../pages/OthersList';
 import IndividualVisit from '../pages/IndividualVisit';
 import UserProfile from '../pages/UserProfile';
+import CommunityDetails from '../pages/CommunityDetails';
+import FamilyVisit from '../pages/FamilyVisit';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -59,6 +61,10 @@ const Layout = () => {
             path="/forane/list/:foraneId/community/:communityId/visit"
             element={<FamilyList />}
           />
+          <Route
+            path="/forane/list/:foraneId/community/:communityId/family/:familyId/visit"
+            element={<FamilyVisit />}
+          />
           <Route path="/institution/list" element={<InstitutionList />} />
           <Route path="/institution/add" element={<AddInstitution />} />
           <Route
@@ -79,6 +85,14 @@ const Layout = () => {
           <Route
             path="/parish/list/:parishId/community/:communityId/visit"
             element={<FamilyList />}
+          />
+          <Route
+            path="/parish/list/:parishId/community/:communityId/family/:familyId/visit"
+            element={<FamilyVisit />}
+          />
+          <Route
+            path="/parish/list/:parishId/community/:communityId/details"
+            element={<CommunityDetails />}
           />
           <Route
             path="/parish/list/:parishId/community/:communityId/family/add"

@@ -10,6 +10,7 @@ import {
   addCommunityThunk,
   fetchCommunitiesThunk,
 } from '../../store/actions/communityActions.js';
+import { fetchParishesThunk } from '../../store/actions/parishActions.js';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -24,8 +25,16 @@ const CommunityList = () => {
   const { parishId, foraneId } = useParams();
   const inForaneContext = Boolean(foraneId) && !parishId;
 
-  const handleCommunityVisit = id => {
-    console.log('Visiting community:', id);
+  const goToCommunityDetails = id => {
+    if (parishId) {
+      navigate(`/parish/list/${parishId}/community/${id}/details`);
+    } else if (foraneId) {
+      // Optional future: /forane/.../community/:id/details
+      navigate(`/forane/list/${foraneId}/community/${id}/visit`);
+    }
+  };
+
+  const goToFamilies = id => {
     if (parishId) {
       navigate(`/parish/list/${parishId}/community/${id}/visit`);
     } else if (foraneId) {
@@ -53,12 +62,38 @@ const CommunityList = () => {
       }
   );
   const { items, loading, error } = communityState;
+  const parishState = useAppSelector(state => state.parish);
+  const parishName = useAppSelector(state => {
+    if (!parishId) return null;
+    const id = Number(parishId);
+    const found = state.parish.items.find(p => p.id === id);
+    return found ? found.churchName : null;
+  });
 
   useEffect(() => {
-    if (parentId && !communityState.loaded && !loading) {
+    if (
+      parentId &&
+      !communityState.loaded &&
+      !loading &&
+      !communityState.error
+    ) {
       dispatch(fetchCommunitiesThunk({ parentType, parentId }));
     }
-  }, [parentId, parentType, communityState.loaded, loading, dispatch]);
+  }, [
+    parentId,
+    parentType,
+    communityState.loaded,
+    communityState.error,
+    loading,
+    dispatch,
+  ]);
+
+  // Ensure parishes are loaded so we can show parish name in the form
+  useEffect(() => {
+    if (!inForaneContext && !parishState.loaded && !parishState.loading) {
+      dispatch(fetchParishesThunk());
+    }
+  }, [inForaneContext, parishState.loaded, parishState.loading, dispatch]);
 
   const filtered = useMemo(
     () =>
@@ -73,7 +108,8 @@ const CommunityList = () => {
       addCommunityThunk({
         parentType,
         parentId,
-        data: { name: data.name, number: data.number },
+        // API expects { com_par_id, com_name }
+        data: { com_par_id: parentId, com_name: data.name?.trim() },
       })
     );
     setShowAdd(false);
@@ -112,8 +148,18 @@ const CommunityList = () => {
           </div>
         )}
         {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
-            {error}
+          <div className="mb-4 text-sm bg-red-50 border border-red-200 px-3 py-2 rounded flex items-center justify-between gap-3">
+            <span className="text-red-600">{error}</span>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() =>
+                  dispatch(fetchCommunitiesThunk({ parentType, parentId }))
+                }
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
         {filtered.length > 0 ? (
@@ -123,7 +169,8 @@ const CommunityList = () => {
                 key={c.id}
                 number={c.number}
                 name={c.name}
-                onClick={() => handleCommunityVisit(c.id)}
+                onView={() => goToCommunityDetails(c.id)}
+                onViewFamilies={() => goToFamilies(c.id)}
               />
             ))}
           </div>
@@ -166,6 +213,9 @@ const CommunityList = () => {
         <CommunityForm
           onSubmit={handleAddCommunity}
           onCancel={() => setShowAdd(false)}
+          parentType={parentType}
+          parentId={parentId}
+          parishName={parishName}
         />
       </Modal>
     </div>

@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   addCommunityThunk,
   fetchCommunitiesThunk,
+  updateCommunityThunk,
 } from '../actions/communityActions.js';
 
 // State keyed by parent "type:id"
@@ -48,12 +49,28 @@ const communitySlice = createSlice({
         state.byParent[key].loading = false;
         state.byParent[key].error =
           action.payload || 'Error loading communities';
+        // Prevent infinite re-fetch loops on error
+        state.byParent[key].loaded = true;
       })
       .addCase(addCommunityThunk.fulfilled, (state, action) => {
         const { parentType, parentId, created } = action.payload;
         const key = `${parentType}:${parentId}`;
         ensureParent(state, key);
         state.byParent[key].items.push(created);
+      })
+      .addCase(updateCommunityThunk.fulfilled, (state, action) => {
+        const { parentType, parentId, updated } = action.payload;
+        const key = `${parentType}:${parentId}`;
+        ensureParent(state, key);
+        const idx = state.byParent[key].items.findIndex(
+          i => i.id === updated.id
+        );
+        if (idx !== -1) {
+          state.byParent[key].items[idx] = {
+            ...state.byParent[key].items[idx],
+            ...updated,
+          };
+        }
       });
   },
 });

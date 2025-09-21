@@ -16,27 +16,34 @@ import React, { useState, useEffect } from 'react';
 */
 
 const CommunityForm = ({
-  initialData = {},
+  initialData = null,
   onSubmit,
   onCancel,
   isEdit = false,
   height = 'auto',
   width = '100%',
   className = '',
+  // context for displaying selected parish (read-only)
+  parentType, // 'parish' | 'forane' (we currently only support parish)
+  parentId,
+  parishName,
 }) => {
   const [formData, setFormData] = useState({
-    id: initialData.id,
-    number: initialData.number || '',
-    name: initialData.name || '',
+    id: initialData?.id,
+    number: initialData?.number || '',
+    name: initialData?.name || '',
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    setFormData({
-      id: initialData.id,
-      number: initialData.number || '',
-      name: initialData.name || '',
-    });
+    // Only sync when a real initialData is provided (e.g., edit mode)
+    if (initialData && Object.keys(initialData).length) {
+      setFormData({
+        id: initialData.id,
+        number: initialData.number || '',
+        name: initialData.name || '',
+      });
+    }
   }, [initialData]);
 
   const cardStyle = {
@@ -83,6 +90,21 @@ const CommunityForm = ({
       <form onSubmit={handleSubmit} className="h-full">
         <div className="flex flex-col sm:flex-row h-full p-3 sm:p-4 gap-3 sm:gap-4">
           <div className="flex-1 p-3 sm:p-4 border-2 border-blue-400 rounded-xl overflow-hidden min-w-0 flex flex-col">
+            {/* Context info */}
+            {parentType === 'parish' && parentId && (
+              <div className="mb-3">
+                <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
+                  Parish
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={parishName ? parishName : `Parish #${parentId}`}
+                  className="w-full bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm border border-transparent focus:outline-none"
+                />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 flex-1">
               {/* Left Column */}
               <div className="space-y-2 flex flex-col">
