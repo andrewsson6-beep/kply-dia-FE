@@ -47,6 +47,8 @@ const familySlice = createSlice({
         state.byCommunity[communityId].loading = false;
         state.byCommunity[communityId].error =
           action.payload || 'Error loading families';
+        // Prevent re-fetch loops on error
+        state.byCommunity[communityId].loaded = true;
       })
       .addCase(addFamilyThunk.fulfilled, (state, action) => {
         const { communityId, created } = action.payload;

@@ -29,6 +29,8 @@ const individualSlice = createSlice({
       .addCase(fetchIndividualsThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading individuals';
+        // Prevent infinite re-fetch loop on error
+        state.loaded = true;
       })
       // add
       .addCase(addIndividualThunk.pending, state => {

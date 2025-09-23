@@ -28,6 +28,8 @@ const foraneSlice = createSlice({
       .addCase(fetchForanesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading foranes';
+        // Mark as loaded to prevent infinite re-fetch loops on error
+        state.loaded = true;
       })
       // Add
       .addCase(addForaneThunk.pending, state => {

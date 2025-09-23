@@ -31,6 +31,8 @@ const parishSlice = createSlice({
       .addCase(fetchParishesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading parishes';
+        // Prevent re-fetch loops on error
+        state.loaded = true;
       })
       // Per-forane parishes
       .addCase(fetchParishesByForaneThunk.pending, (state, action) => {
@@ -64,6 +66,8 @@ const parishSlice = createSlice({
         state.byForane[foraneId].loading = false;
         state.byForane[foraneId].error =
           action.payload || 'Error loading parishes';
+        // Prevent re-fetch loops on error for this forane
+        state.byForane[foraneId].loaded = true;
       })
       .addCase(addParishThunk.pending, state => {
         state.error = null;

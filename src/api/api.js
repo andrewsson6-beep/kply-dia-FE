@@ -223,10 +223,12 @@ export const domainApi = {
     try {
       const res = await axiosInstance.get('/forane-list');
       const { code, data, msg } = res.data || {};
-      if (code !== 200 || !Array.isArray(data)) {
+      if (code !== 200) {
         throw new Error(msg || 'Failed to load foranes');
       }
-      const items = data.map(row => ({
+      // Backend may return a string like 'No Foranes Present' when empty
+      const list = Array.isArray(data) ? data : [];
+      const items = list.map(row => ({
         id: row.for_id,
         churchName: row.for_name,
         place: row.for_location,
@@ -235,7 +237,7 @@ export const domainApi = {
         totalAmount: formatINR(row.for_total_contribution_amount),
         imageUrl: undefined,
       }));
-      const options = data.map(row => ({
+      const options = list.map(row => ({
         id: row.for_id,
         name: row.for_name,
         location: row.for_location,
