@@ -12,7 +12,8 @@ const ChurchForm = ({
   foraneOptions = [],
 }) => {
   // Exclude totalAmount from being part of the form state / submission
-  const { totalAmount: _omitTotalAmount, ...restInitialData } = initialData || {};
+  const { totalAmount: _omitTotalAmount, ...restInitialData } =
+    initialData || {};
   const [formData, setFormData] = useState({
     churchName: restInitialData.churchName || '',
     place: restInitialData.place || '',

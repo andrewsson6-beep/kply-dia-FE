@@ -11,9 +11,7 @@ const ParishList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error } = useAppSelector(
-    state => state.parish
-  );
+  const { items, loading, error } = useAppSelector(state => state.parish);
   const { nameOptions } = useAppSelector(state => state.forane);
 
   // Always fetch fresh parish data on every visit

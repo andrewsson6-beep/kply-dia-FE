@@ -108,7 +108,7 @@ const CommunityForm = ({
 
             <div className="grid grid-cols-1 gap-2 sm:gap-4 flex-1">
               {/* Community Number field removed per requirements */}
-              
+
               {/* Main Column */}
               <div className="space-y-2 flex flex-col">
                 <div className="flex-shrink-0">

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../layout/Header';
+import CommunityForm from '../forms/CommunityForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { domainApi } from '../../api/api.js';
+import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import { updateCommunityThunk } from '../../store/actions/communityActions.js';
 
 // Community Details page (skeleton similar to Individual/Institution visit pages)
 // Shows basic meta and totals; future: contributions at community level if API exists.
@@ -10,10 +13,14 @@ const CommunityDetails = () => {
   const { parishId, communityId } = useParams();
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector(state => state.auth);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -34,6 +41,50 @@ const CommunityDetails = () => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parishId, communityId]);
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setError('');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setError('');
+  };
+
+  const handleUpdateCommunity = async formData => {
+    setUpdating(true);
+    setError('');
+    try {
+      const payload = {
+        com_id: Number(communityId),
+        com_name: formData.name.trim(),
+        com_par_id: Number(parishId),
+        com_updated_by: user?.id || 0,
+      };
+
+      const action = await dispatch(
+        updateCommunityThunk({
+          parentType: 'parish',
+          parentId: Number(parishId),
+          payload,
+        })
+      );
+
+      if (updateCommunityThunk.fulfilled.match(action)) {
+        // Refresh the community data
+        await load();
+        setIsEditing(false);
+        // Could show success message here if needed
+      } else {
+        setError(action.payload || 'Failed to update community');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update community');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <div style={{ paddingTop: headerOffset }}>
@@ -62,12 +113,15 @@ const CommunityDetails = () => {
             </button>
             {/* Placeholder actions mirroring other detail pages */}
             <button
-              onClick={() => {
-                /* future: edit community */
-              }}
-              className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm"
+              onClick={handleEditClick}
+              disabled={isEditing}
+              className={`px-3 py-2 rounded text-sm ${
+                isEditing
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-yellow-600 hover:bg-yellow-700 text-white'
+              }`}
             >
-              Edit Community
+              {isEditing ? 'Editing...' : 'Edit Community'}
             </button>
             <button
               onClick={() => {
@@ -91,28 +145,55 @@ const CommunityDetails = () => {
           </div>
         ) : data ? (
           <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="text-lg font-semibold text-blue-700">
-                {data.name}
+            {isEditing ? (
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Edit Community
+                </h3>
+                <CommunityForm
+                  initialData={{
+                    id: data.id,
+                    name: data.name,
+                  }}
+                  isEdit={true}
+                  onSubmit={handleUpdateCommunity}
+                  onCancel={handleCancelEdit}
+                  parentType="parish"
+                  parentId={parishId}
+                  parishName={`Parish #${parishId}`}
+                  className="max-w-2xl"
+                />
+                {updating && (
+                  <div className="mt-4 text-sm text-gray-600 flex items-center gap-2">
+                    <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    Updating community...
+                  </div>
+                )}
               </div>
-              <div className="mt-1 text-sm text-gray-700">
-                Code: <span className="font-mono">{data.code || '-'}</span>
-              </div>
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Parish ID:</span>{' '}
-                  {data.parishId}
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="text-lg font-semibold text-blue-700">
+                  {data.name}
                 </div>
-                {/* Uncomment if you want to show Forane ID */}
-                {/* <div>
-                  <span className="text-gray-500">Forane ID:</span> {data.foraneId ?? '-'}
-                </div> */}
-                <div>
-                  <span className="text-gray-500">Total:</span>{' '}
-                  {data.totalAmount}
+                <div className="mt-1 text-sm text-gray-700">
+                  Code: <span className="font-mono">{data.code || '-'}</span>
+                </div>
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Parish ID:</span>{' '}
+                    {data.parishId}
+                  </div>
+                  {/* Uncomment if you want to show Forane ID */}
+                  {/* <div>
+                    <span className="text-gray-500">Forane ID:</span> {data.foraneId ?? '-'}
+                  </div> */}
+                  <div>
+                    <span className="text-gray-500">Total:</span>{' '}
+                    {data.totalAmount}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Future: contributions/summary per community */}
             <div className="text-sm text-gray-500">

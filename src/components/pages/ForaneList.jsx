@@ -11,9 +11,7 @@ const ForaneList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error } = useAppSelector(
-    state => state.forane
-  );
+  const { items, loading, error } = useAppSelector(state => state.forane);
 
   // Always fetch fresh forane data on every visit
   useEffect(() => {
