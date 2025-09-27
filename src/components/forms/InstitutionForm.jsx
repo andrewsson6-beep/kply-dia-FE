@@ -18,7 +18,6 @@ const empty = {
   principalContact: '',
   administratorName: '',
   administratorContact: '',
-  totalAmount: '',
 };
 
 const InstitutionForm = ({
@@ -44,7 +43,6 @@ const InstitutionForm = ({
     if (!form.administratorName.trim()) e.administratorName = 'Required';
     if (!/^\d{7,15}$/.test(form.administratorContact))
       e.administratorContact = '7-15 digits';
-    if (!form.totalAmount.toString().trim()) e.totalAmount = 'Required';
     return e;
   };
 
@@ -193,20 +191,6 @@ const InstitutionForm = ({
             onChange={e => handleChange('administratorContact', e.target.value)}
             className={inputCls('')}
             placeholder="Digits only"
-          />
-        </div>
-        <div>
-          <label className={label}>
-            <span>Total Amount</span>
-            {errors.totalAmount && (
-              <span className={errCls}>{errors.totalAmount}</span>
-            )}
-          </label>
-          <input
-            value={form.totalAmount}
-            onChange={e => handleChange('totalAmount', e.target.value)}
-            className={inputCls('')}
-            placeholder="Eg: Rs. 10,000"
           />
         </div>
       </div>

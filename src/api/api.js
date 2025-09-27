@@ -365,7 +365,14 @@ export const domainApi = {
     try {
       const res = await axiosInstance.get('/institution/institution-list');
       const { code, data, msg } = res.data || {};
-      if (code !== 200 || !Array.isArray(data)) {
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to load institutions');
+      }
+      // Handle case where API returns "No institutions Present" as string
+      if (typeof data === 'string' && data.includes('No institutions')) {
+        return [];
+      }
+      if (!Array.isArray(data)) {
         throw new Error(msg || 'Failed to load institutions');
       }
       const items = data.map(row => {

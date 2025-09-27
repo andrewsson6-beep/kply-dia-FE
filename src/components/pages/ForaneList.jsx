@@ -8,6 +8,7 @@ import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
@@ -19,11 +20,28 @@ const ForaneList = () => {
   }, [dispatch]);
 
   const filtered = useMemo(() => {
-    if (!selectedLetter) return items;
-    return items.filter(c =>
-      c.churchName.toUpperCase().startsWith(selectedLetter)
-    );
-  }, [selectedLetter, items]);
+    let result = items;
+
+    // Apply letter filter
+    if (selectedLetter) {
+      result = result.filter(c =>
+        c.churchName.toUpperCase().startsWith(selectedLetter)
+      );
+    }
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      result = result.filter(
+        c =>
+          c.churchName.toLowerCase().includes(search) ||
+          c.place.toLowerCase().includes(search) ||
+          c.vicarName.toLowerCase().includes(search)
+      );
+    }
+
+    return result;
+  }, [selectedLetter, searchTerm, items]);
 
   const handleVisitForane = id => {
     // Navigate to forane-specific parish list and provide a return target
@@ -32,14 +50,25 @@ const ForaneList = () => {
     });
   };
 
+  const handleSearchChange = searchValue => {
+    setSearchTerm(searchValue);
+  };
+
   return (
     <div className="p-4 sm:p-6" style={{ paddingTop: headerOffset }}>
       <Header
+        headerInfo={{
+          title: 'Forane Management',
+          subtitle: 'Browse and manage all foranes',
+        }}
+        showFilter={true}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off
           console.log('Selected letter:', ltr);
         }}
+        searchValue={searchTerm}
+        onSearchChange={handleSearchChange}
       />
 
       <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
@@ -54,16 +83,47 @@ const ForaneList = () => {
         </div>
       )}
 
-      {selectedLetter && (
-        <div className="mb-4 text-sm text-gray-600">
-          Filtering by:{' '}
-          <span className="font-semibold text-blue-600">{selectedLetter}</span>
-          <button
-            onClick={() => setSelectedLetter(null)}
-            className="ml-3 text-blue-500 hover:underline"
-          >
-            Clear
-          </button>
+      {(selectedLetter || searchTerm.trim()) && (
+        <div className="mb-4 flex flex-wrap gap-2 text-sm">
+          {selectedLetter && (
+            <div className="text-gray-600">
+              Filtering by letter:{' '}
+              <span className="font-semibold text-blue-600">
+                {selectedLetter}
+              </span>
+              <button
+                onClick={() => setSelectedLetter(null)}
+                className="ml-2 text-blue-500 hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+          {searchTerm.trim() && (
+            <div className="text-gray-600">
+              Searching for:{' '}
+              <span className="font-semibold text-green-600">
+                "{searchTerm.trim()}"
+              </span>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="ml-2 text-green-500 hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+          {(selectedLetter || searchTerm.trim()) && (
+            <button
+              onClick={() => {
+                setSelectedLetter(null);
+                setSearchTerm('');
+              }}
+              className="text-red-500 hover:underline font-medium"
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
       )}
 
@@ -84,7 +144,22 @@ const ForaneList = () => {
         ))}
         {!loading && filtered.length === 0 && (
           <div className="text-center text-gray-500 py-10">
-            No churches match that letter.
+            {selectedLetter || searchTerm.trim() ? (
+              <div>
+                <p>No foranes match your current filters.</p>
+                <button
+                  onClick={() => {
+                    setSelectedLetter(null);
+                    setSearchTerm('');
+                  }}
+                  className="mt-2 text-blue-500 hover:underline"
+                >
+                  Clear all filters to see all foranes
+                </button>
+              </div>
+            ) : (
+              'No foranes found.'
+            )}
           </div>
         )}
       </div>

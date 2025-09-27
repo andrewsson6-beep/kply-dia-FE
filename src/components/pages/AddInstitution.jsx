@@ -21,7 +21,6 @@ function AddInstitution() {
         ins_email: '',
         ins_website: '',
         ins_head_name: data.managerName || '',
-        ins_total_contribution_amount: Number(data.totalAmount || 0),
       };
       await domainApi.addInstitution(payload);
       showToast('Institution added successfully', { type: 'success' });

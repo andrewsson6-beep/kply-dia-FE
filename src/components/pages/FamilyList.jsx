@@ -17,6 +17,7 @@ import {
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const headerOffset = useHeaderOffset();
 
   const dispatch = useAppDispatch();
@@ -37,6 +38,10 @@ function FamilyList() {
   );
 
   const handleAddContribution = id => setContributionFor(id);
+
+  const handleSearchChange = searchValue => {
+    setSearchTerm(searchValue);
+  };
 
   const handleVisit = id => {
     if (parishId) {
@@ -125,36 +130,56 @@ function FamilyList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cid]);
 
-  const filteredFamilies = useMemo(
-    () =>
-      families.filter(f =>
-        selectedLetter
-          ? f.familyName?.toUpperCase().startsWith(selectedLetter)
-          : true
-      ),
-    [families, selectedLetter]
-  );
+  const filteredFamilies = useMemo(() => {
+    let result = families;
+
+    // Apply letter filter
+    if (selectedLetter) {
+      result = result.filter(f =>
+        (f.familyName || '').toUpperCase().startsWith(selectedLetter)
+      );
+    }
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      result = result.filter(
+        f =>
+          (f.familyName || '').toLowerCase().includes(search) ||
+          (f.familyHead || '').toLowerCase().includes(search) ||
+          (f.contactNumber || '').toLowerCase().includes(search)
+      );
+    }
+
+    return result;
+  }, [families, selectedLetter, searchTerm]);
 
   // Derive header info (we currently don't have community name; show IDs)
   const headerInfo = {
-    title: 'Community Families',
-    subtitle: communityName ? communityName : `Community #${cid}`,
+    title: 'Family Management',
+    subtitle: communityName
+      ? `Families in ${communityName}`
+      : `Families in Community #${cid}`,
   };
 
   return (
     <div style={{ paddingTop: headerOffset }}>
       <Header
+        headerInfo={headerInfo}
+        showFilter={true}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off
           console.log('Selected letter:', ltr);
         }}
-        headerInfo={headerInfo}
+        searchValue={searchTerm}
+        onSearchChange={handleSearchChange}
       />
 
       {/* Header offset handled by parent padding; remove mt-16 */}
       <div className="p-4 md:p-6">
-        {filteredFamilies.length > 0 && (
+        {(filteredFamilies.length > 0 ||
+          (families.length > 0 && (selectedLetter || searchTerm.trim()))) && (
           <div className="flex items-center justify-between mb-4">
             <button
               className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer text-sm"
@@ -173,6 +198,50 @@ function FamilyList() {
         {error && (
           <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
             {error}
+          </div>
+        )}
+
+        {(selectedLetter || searchTerm.trim()) && (
+          <div className="mb-4 flex flex-wrap gap-2 text-sm">
+            {selectedLetter && (
+              <div className="text-gray-600">
+                Filtering by letter:{' '}
+                <span className="font-semibold text-blue-600">
+                  {selectedLetter}
+                </span>
+                <button
+                  onClick={() => setSelectedLetter(null)}
+                  className="ml-2 text-blue-500 hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            {searchTerm.trim() && (
+              <div className="text-gray-600">
+                Searching for:{' '}
+                <span className="font-semibold text-green-600">
+                  "{searchTerm.trim()}"
+                </span>
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="ml-2 text-green-500 hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            {(selectedLetter || searchTerm.trim()) && (
+              <button
+                onClick={() => {
+                  setSelectedLetter(null);
+                  setSearchTerm('');
+                }}
+                className="text-red-500 hover:underline font-medium"
+              >
+                Clear All Filters
+              </button>
+            )}
           </div>
         )}
         {filteredFamilies.length > 0 ? (
@@ -195,15 +264,41 @@ function FamilyList() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center py-24">
-            <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
-              No families yet. Create the first family to get started.
-            </p>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-            >
-              + Add Family
-            </button>
+            {selectedLetter || searchTerm.trim() ? (
+              <div>
+                <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                  No families match your current filters.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedLetter(null);
+                    setSearchTerm('');
+                  }}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm mb-4"
+                >
+                  Clear All Filters
+                </button>
+                <br />
+                <button
+                  onClick={() => setShowAdd(true)}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                >
+                  + Add Family
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                  No families yet. Create the first family to get started.
+                </p>
+                <button
+                  onClick={() => setShowAdd(true)}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                >
+                  + Add Family
+                </button>
+              </div>
+            )}
             <button
               className="mt-4 text-xs text-gray-500 hover:text-gray-700 underline"
               onClick={() => window.history.back()}

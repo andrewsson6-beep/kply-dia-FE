@@ -7,6 +7,8 @@ const Header = ({
   selectedLetter: controlledLetter,
   showFilter = false,
   headerInfo,
+  searchValue,
+  onSearchChange,
 }) => {
   const [showAlphabet, setShowAlphabet] = useState(false);
   const [uncontrolledLetter, setUncontrolledLetter] = useState(null);
@@ -145,6 +147,8 @@ const Header = ({
             <input
               type="text"
               placeholder="Search.."
+              value={searchValue || ''}
+              onChange={e => onSearchChange && onSearchChange(e.target.value)}
               className="pl-8 pr-3 py-2  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm"
             />
             <svg

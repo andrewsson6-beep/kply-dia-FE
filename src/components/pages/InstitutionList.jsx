@@ -11,6 +11,7 @@ import { useToast } from '../ui/useToast.js';
 
 function InstitutionList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const headerOffset = useHeaderOffset();
   const navigate = useNavigate();
 
@@ -84,14 +85,53 @@ function InstitutionList() {
     setDeletingInstitution(null);
   };
 
+  const handleSearchChange = searchValue => {
+    setSearchTerm(searchValue);
+  };
+
+  // Header configuration
+  const headerInfo = {
+    title: 'Institution Management',
+    subtitle: 'Manage and view all institutions',
+  };
+
+  // Enhanced filtering logic
+  const filteredInstitutions = institutions.filter(institution => {
+    // Apply letter filter
+    const letterMatch = selectedLetter
+      ? (institution.institutionName || '')
+          .toUpperCase()
+          .startsWith(selectedLetter)
+      : true;
+
+    // Apply search filter
+    const searchMatch = searchTerm.trim()
+      ? (institution.institutionName || '')
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase().trim()) ||
+        (institution.place || '')
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase().trim()) ||
+        (institution.contactPerson || '')
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase().trim())
+      : true;
+
+    return letterMatch && searchMatch;
+  });
+
   return (
     <div style={{ paddingTop: headerOffset }}>
       <Header
+        headerInfo={headerInfo}
+        showFilter={true}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off
           console.log('Selected letter:', ltr);
         }}
+        searchValue={searchTerm}
+        onSearchChange={handleSearchChange}
       />
       {/* Content wrapper: add enough top padding to clear fixed header height */}
       {/* Header offset handled by outer wrapper padding */}
@@ -101,22 +141,100 @@ function InstitutionList() {
             {error}
           </div>
         )}
+
+        {(selectedLetter || searchTerm.trim()) && (
+          <div className="mb-4 flex flex-wrap gap-2 text-sm">
+            {selectedLetter && (
+              <div className="text-gray-600">
+                Filtering by letter:{' '}
+                <span className="font-semibold text-blue-600">
+                  {selectedLetter}
+                </span>
+                <button
+                  onClick={() => setSelectedLetter(null)}
+                  className="ml-2 text-blue-500 hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            {searchTerm.trim() && (
+              <div className="text-gray-600">
+                Searching for:{' '}
+                <span className="font-semibold text-green-600">
+                  "{searchTerm.trim()}"
+                </span>
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="ml-2 text-green-500 hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            {(selectedLetter || searchTerm.trim()) && (
+              <button
+                onClick={() => {
+                  setSelectedLetter(null);
+                  setSearchTerm('');
+                }}
+                className="text-red-500 hover:underline font-medium"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </div>
+        )}
         {loading && (
           <div className="flex justify-center py-10">
             <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         <div className="grid grid-cols-1 gap-8">
-          {institutions.map(i => (
-            <InstitutionCard
-              key={i.id}
-              {...i}
-              onVisit={() => handleVisitInstitution(i.id)}
-              onAddContribution={openAddContribution}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
+          {filteredInstitutions.length > 0 ? (
+            filteredInstitutions.map(i => (
+              <InstitutionCard
+                key={i.id}
+                {...i}
+                onVisit={() => handleVisitInstitution(i.id)}
+                onAddContribution={openAddContribution}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-24">
+              {selectedLetter || searchTerm.trim() ? (
+                <div>
+                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                    No institutions match your current filters.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedLetter(null);
+                      setSearchTerm('');
+                    }}
+                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                    No institutions yet. Add the first institution to get
+                    started.
+                  </p>
+                  <button
+                    onClick={() => navigate('/institution/add')}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                  >
+                    + Add Institution
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
