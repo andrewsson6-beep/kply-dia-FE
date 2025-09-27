@@ -163,6 +163,19 @@ const IndividualVisit = () => {
 
   const rows = useMemo(() => data?.contributions || [], [data]);
 
+  const toDMY = raw => {
+    const s = String(raw || '');
+    const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    // fallback: try Date parse
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const pad = n => (n < 10 ? `0${n}` : `${n}`);
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+    return s || '-';
+  };
+
   return (
     <div style={{ paddingTop: headerOffset }}>
       <Header
@@ -262,7 +275,7 @@ const IndividualVisit = () => {
                   <tbody>
                     {rows.map(r => (
                       <tr key={r.icon_id} className="border-t border-gray-100">
-                        <td className="py-2 pr-4">{r.icon_date}</td>
+                        <td className="py-2 pr-4">{toDMY(r.icon_date)}</td>
                         <td className="py-2 pr-4">
                           Rs.{' '}
                           {Number(r.icon_amount || 0).toLocaleString('en-IN')}

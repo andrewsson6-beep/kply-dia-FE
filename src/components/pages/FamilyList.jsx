@@ -60,6 +60,8 @@ function FamilyList() {
         communityId: cid,
         familyId: contributionFor,
         amount: Number(data.amount || 0),
+        notes: data.notes || '',
+        date: data.date,
       })
     );
     setContributionFor(null);

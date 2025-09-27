@@ -446,6 +446,18 @@ export const domainApi = {
       if (code !== 200 || !data) {
         throw new Error(msg || 'Failed to load institution');
       }
+      // Normalize contributions to ensure incon_date is a valid date string (fallback to existing or today)
+      const today = () => {
+        const d = new Date();
+        const pad = n => (n < 10 ? `0${n}` : `${n}`);
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      };
+      if (Array.isArray(data.contributions)) {
+        data.contributions = data.contributions.map(c => ({
+          ...c,
+          incon_date: c.incon_date || today(),
+        }));
+      }
       return data;
     } catch (error) {
       const res = error.response;

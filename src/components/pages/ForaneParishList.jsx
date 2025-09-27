@@ -121,12 +121,12 @@ const ForaneParishList = () => {
           >
             &larr; Back
           </button>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+          {/* <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
             Forane Parishes
             {loading && (
               <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
             )}
-          </h1>
+          </h1> */}
         </div>
 
         {error && (

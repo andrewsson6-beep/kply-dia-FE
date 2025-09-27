@@ -23,6 +23,7 @@ const ChurchForm = ({
     ...restInitialData,
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync with new initialData in edit mode
   useEffect(() => {
@@ -90,13 +91,21 @@ const ChurchForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     if (validateForm()) {
-      // Ensure totalAmount never leaves this component
-      const { totalAmount: _discard, ...payload } = formData;
-      onSubmit && onSubmit(payload);
+      setIsSubmitting(true);
+      try {
+        // Ensure totalAmount never leaves this component
+        const { totalAmount: _discard, ...payload } = formData;
+        await onSubmit(payload);
+        // Don't close modal here - let parent handle it after API success
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -264,9 +273,17 @@ const ChurchForm = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
                 >
-                  {isEdit ? 'UPDATE' : 'ADD'} CHURCH
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                      {isEdit ? 'UPDATING...' : 'ADDING...'}
+                    </div>
+                  ) : (
+                    `${isEdit ? 'UPDATE' : 'ADD'} CHURCH`
+                  )}
                 </button>
               </div>
             </div>
@@ -282,9 +299,17 @@ const ChurchForm = ({
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
+                disabled={isSubmitting}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
               >
-                {isEdit ? 'UPDATE' : 'ADD'} CHURCH
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {isEdit ? 'UPDATING...' : 'ADDING...'}
+                  </div>
+                ) : (
+                  `${isEdit ? 'UPDATE' : 'ADD'} CHURCH`
+                )}
               </button>
             </div>
           </div>

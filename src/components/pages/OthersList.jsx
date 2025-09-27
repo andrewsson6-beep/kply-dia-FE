@@ -84,11 +84,12 @@ const OthersList = () => {
   };
 
   const submitContribution = async data => {
-    // Map contribution form to API payload
+    // Map contribution form to API payload (date required)
     const payload = {
       icon_ind_id: contributionFor,
       icon_amount: Number(data.amount || 0),
       icon_purpose: data.notes || '',
+      icon_date: data.date,
     };
     const action = await dispatch(addIndividualContributionThunk(payload));
     if (action && action.meta && action.meta.requestStatus === 'fulfilled') {

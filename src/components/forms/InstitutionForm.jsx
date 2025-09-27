@@ -65,9 +65,12 @@ const InstitutionForm = ({
           ...form,
           id: initialData?.id,
         });
+        // Don't close modal here - let parent handle it after API success
       } else {
         console.warn('InstitutionForm: onSubmit prop is not a function');
       }
+    } catch (error) {
+      console.error('Form submission error:', error);
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +210,16 @@ const InstitutionForm = ({
           disabled={submitting}
           className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
-          {isEdit ? 'Update' : 'Create'}
+          {submitting ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              {isEdit ? 'Updating...' : 'Creating...'}
+            </div>
+          ) : isEdit ? (
+            'Update'
+          ) : (
+            'Create'
+          )}
         </button>
       </div>
     </form>

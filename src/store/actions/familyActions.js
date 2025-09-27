@@ -51,13 +51,17 @@ export const deleteFamilyThunk = createAsyncThunk(
 
 export const addContributionThunk = createAsyncThunk(
   'family/addContribution',
-  async ({ communityId, familyId, amount }, { rejectWithValue }) => {
+  async (
+    { communityId, familyId, amount, notes, date },
+    { rejectWithValue }
+  ) => {
     try {
       // Call real API for family contribution
       const row = await domainApi.addFamilyContribution({
         fcon_fam_id: familyId,
         fcon_amount: Number(amount || 0),
-        fcon_purpose: '',
+        fcon_purpose: notes || '',
+        fcon_date: date,
       });
       return { communityId, row };
     } catch (e) {

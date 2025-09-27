@@ -91,12 +91,13 @@ const FamilyVisit = () => {
     return raw;
   };
 
-  const onAddSubmit = async ({ amount, notes }) => {
+  const onAddSubmit = async ({ amount, notes, date }) => {
     try {
       await domainApi.addFamilyContribution({
         fcon_fam_id: Number(familyId),
         fcon_amount: Number(amount || 0),
         fcon_purpose: notes || '',
+        fcon_date: date,
       });
       showToast('Contribution added successfully', { type: 'success' });
       setShowAdd(false);
@@ -106,13 +107,14 @@ const FamilyVisit = () => {
     }
   };
 
-  const onEditSubmit = async ({ amount, notes }) => {
+  const onEditSubmit = async ({ amount, notes, date }) => {
     if (!editing) return;
     try {
       await domainApi.updateFamilyContribution({
         fcon_id: editing.id,
         fcon_amount: Number(amount || 0),
         fcon_purpose: notes || '',
+        fcon_date: date,
       });
       showToast('Contribution updated successfully', { type: 'success' });
       setEditing(null);
@@ -302,9 +304,9 @@ const FamilyVisit = () => {
           <ContributionForm
             isEdit
             initialData={{
-              amount: editing.amount,
-              notes: editing.purpose,
-              date: toInputDate(editing.date),
+              amount: editing.fcon_amount,
+              notes: editing.fcon_purpose,
+              date: toInputDate(editing.fcon_date),
             }}
             onSubmit={onEditSubmit}
             onCancel={() => setEditing(null)}

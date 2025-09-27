@@ -355,11 +355,17 @@ const IndividualForm = ({
                   </button>
                   <button
                     type="submit"
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
+                    disabled={submitting}
+                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
                   >
-                    {submitting
-                      ? 'SUBMITTING...'
-                      : `${isEdit ? 'UPDATE' : 'ADD'} INDIVIDUAL`}
+                    {submitting ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                        {isEdit ? 'UPDATING...' : 'ADDING...'}
+                      </div>
+                    ) : (
+                      `${isEdit ? 'UPDATE' : 'ADD'} INDIVIDUAL`
+                    )}
                   </button>
                 </div>
               </div>
@@ -375,11 +381,17 @@ const IndividualForm = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
+                  disabled={submitting}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
                 >
-                  {submitting
-                    ? 'SUBMITTING...'
-                    : `${isEdit ? 'UPDATE' : 'ADD'} INDIVIDUAL`}
+                  {submitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {isEdit ? 'UPDATING...' : 'ADDING...'}
+                    </div>
+                  ) : (
+                    `${isEdit ? 'UPDATE' : 'ADD'} INDIVIDUAL`
+                  )}
                 </button>
               </div>
             </div>

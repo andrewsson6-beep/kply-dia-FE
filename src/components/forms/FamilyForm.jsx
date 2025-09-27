@@ -48,6 +48,7 @@ const FamilyForm = ({
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cardStyle = {
     ...(height !== 'auto' && { height }),
@@ -90,12 +91,20 @@ const FamilyForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (validate()) {
-      // Ensure totalAmount is never sent in payload
-      const { totalAmount: _omit, ...payload } = formData;
-      onSubmit && onSubmit(payload);
+      setIsSubmitting(true);
+      try {
+        // Ensure totalAmount is never sent in payload
+        const { totalAmount: _omit, ...payload } = formData;
+        await onSubmit(payload);
+        // Don't close modal here - let parent handle it after API success
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -266,9 +275,17 @@ const FamilyForm = ({
                   </button>
                   <button
                     type="submit"
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-3 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-xs"
                   >
-                    {isEdit ? 'UPDATE' : 'ADD'} FAMILY
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                        {isEdit ? 'UPDATING...' : 'ADDING...'}
+                      </div>
+                    ) : (
+                      `${isEdit ? 'UPDATE' : 'ADD'} FAMILY`
+                    )}
                   </button>
                 </div>
               </div>
@@ -284,9 +301,17 @@ const FamilyForm = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg text-sm"
                 >
-                  {isEdit ? 'UPDATE' : 'ADD'} FAMILY
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {isEdit ? 'UPDATING...' : 'ADDING...'}
+                    </div>
+                  ) : (
+                    `${isEdit ? 'UPDATE' : 'ADD'} FAMILY`
+                  )}
                 </button>
               </div>
             </div>
