@@ -20,7 +20,6 @@ export const setUnauthorizedHandler = fn => {
 // Axios instance (all non-auth requests add bearer automatically)
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 8000,
 });
 
 axiosInstance.interceptors.request.use(config => {

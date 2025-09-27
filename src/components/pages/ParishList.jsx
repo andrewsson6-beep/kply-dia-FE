@@ -11,23 +11,20 @@ const ParishList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error, loaded } = useAppSelector(
+  const { items, loading, error } = useAppSelector(
     state => state.parish
   );
-  const {
-    nameOptions,
-    loaded: foraneLoaded,
-    loading: foraneLoading,
-  } = useAppSelector(state => state.forane);
+  const { nameOptions } = useAppSelector(state => state.forane);
 
+  // Always fetch fresh parish data on every visit
   useEffect(() => {
-    if (!loaded && !loading) dispatch(fetchParishesThunk());
-  }, [loaded, loading, dispatch]);
+    dispatch(fetchParishesThunk());
+  }, [dispatch]);
 
-  // Ensure forane options are available for mapping names
+  // Always fetch forane options for mapping names
   useEffect(() => {
-    if (!foraneLoaded && !foraneLoading) dispatch(fetchForanesThunk());
-  }, [foraneLoaded, foraneLoading, dispatch]);
+    dispatch(fetchForanesThunk());
+  }, [dispatch]);
 
   // const foraneNameById = useMemo(() => {
   //   const map = new Map();
@@ -51,6 +48,12 @@ const ParishList = () => {
     <div className="p-4 sm:p-6" style={{ paddingTop: headerOffset }}>
       <Header onSelect={letter => console.log('Selected letter:', letter)} />
 
+      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+        Parish List
+        {loading && (
+          <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        )}
+      </h1>
       {error && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
           {error}

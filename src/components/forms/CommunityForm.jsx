@@ -30,7 +30,7 @@ const CommunityForm = ({
 }) => {
   const [formData, setFormData] = useState({
     id: initialData?.id,
-    number: initialData?.number || '',
+    // number field removed per requirements
     name: initialData?.name || '',
   });
   const [errors, setErrors] = useState({});
@@ -40,7 +40,7 @@ const CommunityForm = ({
     if (initialData && Object.keys(initialData).length) {
       setFormData({
         id: initialData.id,
-        number: initialData.number || '',
+        // number field removed per requirements
         name: initialData.name || '',
       });
     }
@@ -61,8 +61,7 @@ const CommunityForm = ({
   const validate = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Community name is required';
-    if (formData.number && !/^\d+$/.test(formData.number))
-      newErrors.number = 'Number must be digits only';
+    // Number validation removed per requirements
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -70,13 +69,15 @@ const CommunityForm = ({
   const handleSubmit = e => {
     e.preventDefault();
     if (validate()) {
-      onSubmit && onSubmit(formData);
+      // Ensure number field is never sent in payload
+      const { number: _omit, ...payload } = formData;
+      onSubmit && onSubmit(payload);
     }
   };
 
   const handleCancel = () => {
     if (!isEdit) {
-      setFormData({ number: '', name: '' });
+      setFormData({ name: '' }); // number field removed per requirements
       setErrors({});
     }
     onCancel && onCancel();
@@ -105,32 +106,10 @@ const CommunityForm = ({
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 flex-1">
-              {/* Left Column */}
-              <div className="space-y-2 flex flex-col">
-                <div className="flex-shrink-0">
-                  <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                    Community Number
-                  </label>
-                  <input
-                    type="text"
-                    name="number"
-                    value={formData.number}
-                    onChange={handleChange}
-                    className={`w-full bg-gray-100 rounded-md p-2 text-gray-800 font-medium text-xs sm:text-sm border ${
-                      errors.number
-                        ? 'border-red-400 bg-red-50'
-                        : 'border-transparent focus:border-blue-400'
-                    } focus:outline-none focus:bg-white transition-colors`}
-                    placeholder="Auto / Enter number"
-                  />
-                  {errors.number && (
-                    <p className="text-red-500 text-xs mt-1">{errors.number}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column */}
+            <div className="grid grid-cols-1 gap-2 sm:gap-4 flex-1">
+              {/* Community Number field removed per requirements */}
+              
+              {/* Main Column */}
               <div className="space-y-2 flex flex-col">
                 <div className="flex-shrink-0">
                   <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
@@ -172,7 +151,7 @@ const CommunityForm = ({
               </div>
 
               {/* Desktop Actions */}
-              <div className="hidden sm:flex sm:col-span-2 gap-4 mt-2">
+              <div className="hidden sm:flex gap-4 mt-2">
                 <button
                   type="button"
                   onClick={handleCancel}

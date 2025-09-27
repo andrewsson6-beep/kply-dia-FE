@@ -48,9 +48,7 @@ const AddParish = () => {
         par_name: formData.churchName,
         par_location: formData.place,
         par_vicar_name: formData.vicarName,
-        par_total_contribution_amount: Number(
-          (formData.totalAmount || '0').toString().replace(/[^0-9.]/g, '')
-        ),
+        // par_total_contribution_amount removed per requirements
       };
       const action = await dispatch(addParishThunk(payload));
       if (addParishThunk.fulfilled.match(action)) {

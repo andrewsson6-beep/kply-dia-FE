@@ -44,7 +44,7 @@ const FamilyForm = ({
     familyHead: initialData.familyHead || '',
     community: initialData.community || communityContext || '',
     contactNumber: initialData.contactNumber || '',
-    totalAmount: initialData.totalAmount || '',
+    // totalAmount removed per requirements
   });
 
   const [errors, setErrors] = useState({});
@@ -76,10 +76,7 @@ const FamilyForm = ({
     }
     if (!formData.contactNumber.trim())
       newErrors.contactNumber = 'Contact number is required';
-    if (isEdit) {
-      if (!formData.totalAmount.toString().trim())
-        newErrors.totalAmount = 'Total amount is required';
-    }
+    // Total amount validation removed per requirements
 
     // Basic phone number validation (allow digits, spaces, dashes, parentheses but must result in 10 digits)
     if (
@@ -96,7 +93,9 @@ const FamilyForm = ({
   const handleSubmit = e => {
     e.preventDefault();
     if (validate()) {
-      onSubmit && onSubmit(formData);
+      // Ensure totalAmount is never sent in payload
+      const { totalAmount: _omit, ...payload } = formData;
+      onSubmit && onSubmit(payload);
     }
   };
 
@@ -107,7 +106,7 @@ const FamilyForm = ({
         familyHead: '',
         community: '',
         contactNumber: '',
-        totalAmount: '',
+        // totalAmount removed per requirements
       });
       setErrors({});
     }
@@ -254,55 +253,7 @@ const FamilyForm = ({
                   )}
                 </div>
 
-                {/* Mobile: Total Amount (required only in edit mode) */}
-                <div className="flex-shrink-0 sm:hidden">
-                  <label className="text-blue-500 font-medium text-xs mb-1 block">
-                    Total Amount{isEdit ? '*' : ''}
-                  </label>
-                  <input
-                    type="text"
-                    name="totalAmount"
-                    value={formData.totalAmount}
-                    onChange={handleInputChange}
-                    className={`w-full bg-green-100 border-2 border-green-400 rounded-md p-2 text-green-700 font-bold text-xs text-center ${
-                      errors.totalAmount
-                        ? 'border-red-400 bg-red-50'
-                        : 'focus:border-green-500'
-                    } focus:outline-none transition-colors`}
-                    placeholder="Rs. 0"
-                  />
-                  {errors.totalAmount && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.totalAmount}
-                    </p>
-                  )}
-                </div>
-
-                {/* Desktop: Total Amount (required only in edit mode) */}
-                <div className="hidden sm:flex flex-1 items-end">
-                  <div className="w-full">
-                    <label className="text-blue-500 font-medium text-sm mb-1 block">
-                      Total Amount{isEdit ? '*' : ''}
-                    </label>
-                    <input
-                      type="text"
-                      name="totalAmount"
-                      value={formData.totalAmount}
-                      onChange={handleInputChange}
-                      className={`w-full bg-green-100 border-2 border-green-400 rounded-md p-2 text-green-700 font-bold text-sm text-center ${
-                        errors.totalAmount
-                          ? 'border-red-400 bg-red-50'
-                          : 'focus:border-green-500'
-                      } focus:outline-none transition-colors`}
-                      placeholder="Rs. 0"
-                    />
-                    {errors.totalAmount && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.totalAmount}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                {/* Total Amount fields removed per requirements */}
 
                 {/* Mobile Actions */}
                 <div className="flex-shrink-0 sm:hidden flex gap-2">

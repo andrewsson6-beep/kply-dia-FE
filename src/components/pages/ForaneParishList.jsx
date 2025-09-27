@@ -26,20 +26,20 @@ const ForaneParishList = () => {
         loaded: false,
       }
   );
-  const { items, loading, error, loaded } = parishForaneState;
+  const { items, loading, error } = parishForaneState;
 
+  // Always fetch fresh forane data on every visit
   useEffect(() => {
-    if (!foraneState.loaded && !foraneState.loading) {
-      dispatch(fetchForanesThunk());
-    }
-  }, [foraneState.loaded, foraneState.loading, dispatch]);
+    dispatch(fetchForanesThunk());
+  }, [dispatch]);
 
+  // Always fetch fresh parishes for this forane on every visit
   useEffect(() => {
     const fid = Number(foraneId);
-    if (fid && !loaded && !loading) {
+    if (fid) {
       dispatch(fetchParishesByForaneThunk(fid));
     }
-  }, [foraneId, loaded, loading, dispatch]);
+  }, [foraneId, dispatch]);
 
   const foraneNameById = useMemo(() => {
     const map = new Map();
@@ -90,6 +90,12 @@ const ForaneParishList = () => {
           >
             &larr; Back
           </button>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            Forane Parishes
+            {loading && (
+              <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            )}
+          </h1>
         </div>
 
         {error && (

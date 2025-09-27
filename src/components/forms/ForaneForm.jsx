@@ -22,7 +22,6 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
     for_name: '',
     for_location: '',
     for_vicar_name: '',
-    for_total_contribution_amount: '',
     for_contact_number: '',
   });
   const [errors, setErrors] = useState({});
@@ -43,8 +42,6 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
     if (!form.for_location.trim()) e.for_location = 'Location is required';
     if (!form.for_vicar_name.trim())
       e.for_vicar_name = 'Vicar name is required';
-    if (!String(form.for_total_contribution_amount).trim())
-      e.for_total_contribution_amount = 'Total amount is required';
     if (!form.for_contact_number.trim())
       e.for_contact_number = 'Contact is required';
     if (!for_code) e.for_code = 'Code cannot be empty';
@@ -60,7 +57,6 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
       for_name: form.for_name.trim(),
       for_location: form.for_location.trim(),
       for_vicar_name: form.for_vicar_name.trim(),
-      for_total_contribution_amount: Number(form.for_total_contribution_amount),
       for_contact_number: form.for_contact_number.trim(),
     };
     onSubmit && onSubmit(payload);
@@ -119,25 +115,7 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
               </p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-blue-600 mb-1">
-              Total Contribution Amount*
-            </label>
-            <input
-              name="for_total_contribution_amount"
-              type="number"
-              step="0.01"
-              value={form.for_total_contribution_amount}
-              onChange={onChange}
-              className={`w-full rounded-md border p-2 text-sm ${errors.for_total_contribution_amount ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-gray-50 focus:border-blue-400'}`}
-              placeholder="250000.00"
-            />
-            {errors.for_total_contribution_amount && (
-              <p className="text-xs text-red-600 mt-1">
-                {errors.for_total_contribution_amount}
-              </p>
-            )}
-          </div>
+          {/* Total Contribution Amount field removed per requirements */}
           <div>
             <label className="block text-sm font-medium text-blue-600 mb-1">
               Contact Number*

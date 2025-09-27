@@ -11,28 +11,30 @@ const ChurchForm = ({
   showForaneField = false,
   foraneOptions = [],
 }) => {
+  // Exclude totalAmount from being part of the form state / submission
+  const { totalAmount: _omitTotalAmount, ...restInitialData } = initialData || {};
   const [formData, setFormData] = useState({
-    churchName: initialData.churchName || '',
-    place: initialData.place || '',
-    vicarName: initialData.vicarName || '',
-    contactNumber: initialData.contactNumber || '',
-    totalAmount: initialData.totalAmount || '',
-    forane: initialData.forane || '',
-    ...initialData,
+    churchName: restInitialData.churchName || '',
+    place: restInitialData.place || '',
+    vicarName: restInitialData.vicarName || '',
+    contactNumber: restInitialData.contactNumber || '',
+    forane: restInitialData.forane || '',
+    ...restInitialData,
   });
   const [errors, setErrors] = useState({});
 
   // Sync with new initialData in edit mode
   useEffect(() => {
     if (isEdit) {
+      const { totalAmount: _omit, ...sanitized } = initialData || {};
       setFormData(prev => ({
         ...prev,
-        churchName: initialData.churchName || '',
-        place: initialData.place || '',
-        vicarName: initialData.vicarName || '',
-        contactNumber: initialData.contactNumber || '',
-        totalAmount: initialData.totalAmount || '',
-        forane: initialData.forane || '',
+        churchName: sanitized.churchName || '',
+        place: sanitized.place || '',
+        vicarName: sanitized.vicarName || '',
+        contactNumber: sanitized.contactNumber || '',
+        forane: sanitized.forane || '',
+        ...sanitized,
       }));
     }
   }, [initialData, isEdit]);
@@ -69,8 +71,6 @@ const ChurchForm = ({
       newErrors.vicarName = 'Vicar name is required';
     if (!formData.contactNumber.trim())
       newErrors.contactNumber = 'Contact number is required';
-    if (!formData.totalAmount.trim())
-      newErrors.totalAmount = 'Total amount is required';
 
     // Validate forane if field is shown
     if (showForaneField && !formData.forane.trim()) {
@@ -93,7 +93,9 @@ const ChurchForm = ({
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit && onSubmit(formData);
+      // Ensure totalAmount never leaves this component
+      const { totalAmount: _discard, ...payload } = formData;
+      onSubmit && onSubmit(payload);
     }
   };
 
@@ -104,7 +106,6 @@ const ChurchForm = ({
         place: '',
         vicarName: '',
         contactNumber: '',
-        totalAmount: '',
         forane: '',
       });
       setErrors({});
@@ -248,55 +249,7 @@ const ChurchForm = ({
                   )}
                 </div>
 
-                {/* Mobile: Show Total Amount here (second-to-last) */}
-                <div className="flex-shrink-0 sm:hidden">
-                  <label className="text-blue-500 font-medium text-xs mb-1 block">
-                    Total Amount*
-                  </label>
-                  <input
-                    type="text"
-                    name="totalAmount"
-                    value={formData.totalAmount}
-                    onChange={handleInputChange}
-                    className={`w-full bg-green-100 border-2 border-green-400 rounded-md p-2 text-green-700 font-bold text-xs text-center ${
-                      errors.totalAmount
-                        ? 'border-red-400 bg-red-50'
-                        : 'focus:border-green-500'
-                    } focus:outline-none transition-colors`}
-                    placeholder="Rs. 0"
-                  />
-                  {errors.totalAmount && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.totalAmount}
-                    </p>
-                  )}
-                </div>
-
-                {/* Desktop: Show Total Amount here */}
-                <div className="hidden sm:flex flex-1 items-end">
-                  <div className="w-full">
-                    <label className="text-blue-500 font-medium text-sm mb-1 block">
-                      Total Amount*
-                    </label>
-                    <input
-                      type="text"
-                      name="totalAmount"
-                      value={formData.totalAmount}
-                      onChange={handleInputChange}
-                      className={`w-full bg-green-100 border-2 border-green-400 rounded-md p-2 text-green-700 font-bold text-sm text-center ${
-                        errors.totalAmount
-                          ? 'border-red-400 bg-red-50'
-                          : 'focus:border-green-500'
-                      } focus:outline-none transition-colors`}
-                      placeholder="Rs. 0"
-                    />
-                    {errors.totalAmount && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.totalAmount}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                {/* Total Amount field removed as per requirements */}
               </div>
 
               {/* Action Buttons - Mobile */}

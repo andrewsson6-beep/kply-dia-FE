@@ -11,13 +11,14 @@ const ForaneList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error, loaded } = useAppSelector(
+  const { items, loading, error } = useAppSelector(
     state => state.forane
   );
 
+  // Always fetch fresh forane data on every visit
   useEffect(() => {
-    if (!loaded && !loading) dispatch(fetchForanesThunk());
-  }, [loaded, loading, dispatch]);
+    dispatch(fetchForanesThunk());
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
     if (!selectedLetter) return items;
