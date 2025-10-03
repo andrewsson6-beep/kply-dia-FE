@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
-import { fetchParishesThunk } from '../../store/actions/parishActions.js';
+import { fetchParishesThunk, deleteParishThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import { useToast } from '../ui/useToast.js';
 import { SkeletonStack } from '../ui/Skeletons.jsx';
 
 const ParishList = () => {
@@ -16,6 +17,7 @@ const ParishList = () => {
   const dispatch = useAppDispatch();
   const { items, loading, error } = useAppSelector(state => state.parish);
   const { nameOptions } = useAppSelector(state => state.forane);
+  const { showToast } = useToast();
 
   // Always fetch fresh parish data on every visit
   useEffect(() => {
@@ -35,6 +37,25 @@ const ParishList = () => {
 
   const handleVisitParish = parishId => {
     navigate(`/parish/list/${parishId}/community/list`);
+  };
+
+  const handleDeleteParish = parishId => async () => {
+    const action = await dispatch(deleteParishThunk(parishId));
+    if (deleteParishThunk.fulfilled.match(action)) {
+      showToast('Parish deleted successfully', { type: 'success' });
+      // Optionally refetch to ensure consistency
+      dispatch(fetchParishesThunk());
+      // Notify any listeners (future) that a parish was removed
+      window.dispatchEvent(
+        new CustomEvent('parish-changed', {
+          detail: { parishId, type: 'deleted' },
+        })
+      );
+    } else {
+      showToast(action.payload || 'Failed to delete parish', {
+        type: 'error',
+      });
+    }
   };
 
   const handleSearchChange = searchValue => {
@@ -155,6 +176,7 @@ const ParishList = () => {
               imageUrl={c.imageUrl}
               forane={foraneNameById.get(c.foraneId) || ''}
               onVisitParish={() => handleVisitParish(c.id)}
+              onDeleteParish={handleDeleteParish(c.id)}
               className="max-w-4xl mx-auto"
             />
           ))

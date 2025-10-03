@@ -10,6 +10,7 @@ const ChurchCard = ({
   contactNumber,
   totalAmount,
   onVisitParish,
+  onDeleteParish,
   height = 'auto',
   width = '100%',
   className = '',
@@ -23,6 +24,8 @@ const ChurchCard = ({
     minWidth: 0, // Allows flex items to shrink below their content size
   };
   const [open, setOpen] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const handleKeyDown = e => {
     if ((e.key === 'Enter' || e.key === ' ') && onVisitParish) {
       e.preventDefault();
@@ -180,6 +183,31 @@ const ChurchCard = ({
                     />
                   </svg>
                 </button>
+                {onDeleteParish && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setShowDelete(true);
+                    }}
+                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    aria-label="Delete parish"
+                    title="Delete parish"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m1 0V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
 
               {/* Desktop: Button spans full width at bottom */}
@@ -215,6 +243,31 @@ const ChurchCard = ({
                     />
                   </svg>
                 </button>
+                {onDeleteParish && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setShowDelete(true);
+                    }}
+                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    aria-label="Delete parish"
+                    title="Delete parish"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m1 0V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -252,6 +305,51 @@ const ChurchCard = ({
             Choose how you want the receipt for{' '}
             <span className="font-semibold text-gray-800">{churchName}</span>.
           </p>
+        </Modal>
+      )}
+      {showDelete && (
+        <Modal
+          isOpen={showDelete}
+            onClose={() => (deleting ? null : setShowDelete(false))}
+          title="Delete Parish"
+          size="sm"
+          variant="center"
+          contentPointer
+          closeOnBackdrop={!deleting}
+        >
+          <p className="text-sm text-gray-700 mb-4">
+            Are you sure you want to permanently delete this parish? This action
+            cannot be undone.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              disabled={deleting}
+              onClick={() => !deleting && setShowDelete(false)}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={deleting}
+              onClick={async e => {
+                e.stopPropagation();
+                if (!onDeleteParish || deleting) return;
+                setDeleting(true);
+                try {
+                  await onDeleteParish();
+                } finally {
+                  setDeleting(false);
+                  setShowDelete(false);
+                }
+              }}
+              className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-400 flex items-center justify-center gap-2"
+            >
+              {deleting && (
+                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+              Delete
+            </button>
+          </div>
         </Modal>
       )}
     </div>

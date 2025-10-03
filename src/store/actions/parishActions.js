@@ -36,3 +36,15 @@ export const fetchParishesByForaneThunk = createAsyncThunk(
     }
   }
 );
+
+export const deleteParishThunk = createAsyncThunk(
+  'parish/delete',
+  async (parishId, { rejectWithValue }) => {
+    try {
+      await domainApi.deleteParish(parishId);
+      return parishId;
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to delete parish');
+    }
+  }
+);

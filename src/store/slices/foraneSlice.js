@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchForanesThunk, addForaneThunk } from '../actions/foraneActions.js';
+import { fetchForanesThunk, addForaneThunk, deleteForaneThunk } from '../actions/foraneActions.js';
 
 const initialState = {
   items: [],
@@ -41,6 +41,14 @@ const foraneSlice = createSlice({
       })
       .addCase(addForaneThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to add forane';
+      })
+      .addCase(deleteForaneThunk.fulfilled, (state, action) => {
+        const id = action.payload;
+        state.items = state.items.filter(f => f.id !== id);
+        state.nameOptions = state.nameOptions.filter(f => f.id !== id);
+      })
+      .addCase(deleteForaneThunk.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to delete forane';
       });
   },
 });

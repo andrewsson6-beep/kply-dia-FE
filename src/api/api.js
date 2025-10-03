@@ -274,6 +274,25 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  deleteForane: async for_id => {
+    try {
+      const res = await axiosInstance.post('/delete-forane', { for_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete forane');
+      }
+      return data || true;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to delete forane'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchParishes: async () => {
     try {
       const res = await axiosInstance.get('/all-parish-list');
@@ -356,6 +375,25 @@ export const domainApi = {
         const { data, msg } = res.data;
         throw new Error(
           (typeof data === 'string' && data) || msg || 'Failed to add parish'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  deleteParish: async par_id => {
+    try {
+      const res = await axiosInstance.post('/delete-parish', { par_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete parish');
+      }
+      return data || true;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to delete parish'
         );
       }
       throw new Error(error.message || 'Network error');

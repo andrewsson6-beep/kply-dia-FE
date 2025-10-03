@@ -4,8 +4,9 @@ import Header from '../layout/Header';
 import { useNavigate } from 'react-router-dom';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
-import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import { fetchForanesThunk, deleteForaneThunk } from '../../store/actions/foraneActions.js';
 import { SkeletonStack } from '../ui/Skeletons.jsx';
+import { useToast } from '../ui/useToast.js';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -14,6 +15,7 @@ const ForaneList = () => {
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
   const { items, loading, error } = useAppSelector(state => state.forane);
+  const { showToast } = useToast();
 
   // Always fetch fresh forane data on every visit
   useEffect(() => {
@@ -53,6 +55,19 @@ const ForaneList = () => {
 
   const handleSearchChange = searchValue => {
     setSearchTerm(searchValue);
+  };
+
+  const handleDeleteForane = id => async () => {
+    const action = await dispatch(deleteForaneThunk(id));
+    if (deleteForaneThunk.fulfilled.match(action)) {
+      showToast('Forane deleted successfully', { type: 'success' });
+      // Optional: broadcast event for other views
+      window.dispatchEvent(
+        new CustomEvent('forane-changed', { detail: { foraneId: id, type: 'deleted' } })
+      );
+    } else {
+      showToast(action.payload || 'Failed to delete forane', { type: 'error' });
+    }
   };
 
   return (
@@ -140,6 +155,7 @@ const ForaneList = () => {
               totalAmount={c.totalAmount}
               onVisitParish={() => handleVisitForane(c.id)}
               visitLabel="VISIT FORANE"
+              onDeleteParish={handleDeleteForane(c.id)}
               className="max-w-4xl mx-auto"
             />
           ))

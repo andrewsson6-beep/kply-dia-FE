@@ -22,3 +22,15 @@ export const addForaneThunk = createAsyncThunk(
     }
   }
 );
+
+export const deleteForaneThunk = createAsyncThunk(
+  'forane/delete',
+  async (foraneId, { rejectWithValue }) => {
+    try {
+      await domainApi.deleteForane(foraneId);
+      return foraneId;
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to delete forane');
+    }
+  }
+);
