@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import { SkeletonStack } from '../ui/Skeletons.jsx';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -71,12 +72,7 @@ const ForaneList = () => {
         onSearchChange={handleSearchChange}
       />
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-        Forane List
-        {loading && (
-          <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-        )}
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">Forane List</h1>
       {error && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
           {error}
@@ -128,21 +124,24 @@ const ForaneList = () => {
       )}
 
       <div className="space-y-6 mt-2">
-        {filtered.map(c => (
-          <ChurchCard
-            key={c.id}
-            id={c.id}
-            churchName={c.churchName}
-            place={c.place}
-            vicarName={c.vicarName}
-            contactNumber={c.contactNumber}
-            totalAmount={c.totalAmount}
-            onVisitParish={() => handleVisitForane(c.id)}
-            visitLabel="VISIT FORANE"
-            className="max-w-4xl mx-auto"
-          />
-        ))}
-        {!loading && filtered.length === 0 && (
+        {loading ? (
+          <SkeletonStack variant="church" count={3} />
+        ) : filtered.length > 0 ? (
+          filtered.map(c => (
+            <ChurchCard
+              key={c.id}
+              id={c.id}
+              churchName={c.churchName}
+              place={c.place}
+              vicarName={c.vicarName}
+              contactNumber={c.contactNumber}
+              totalAmount={c.totalAmount}
+              onVisitParish={() => handleVisitForane(c.id)}
+              visitLabel="VISIT FORANE"
+              className="max-w-4xl mx-auto"
+            />
+          ))
+        ) : (
           <div className="text-center text-gray-500 py-10">
             {selectedLetter || searchTerm.trim() ? (
               <div>

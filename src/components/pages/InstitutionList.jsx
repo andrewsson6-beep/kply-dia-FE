@@ -8,6 +8,7 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useNavigate } from 'react-router-dom';
 import { domainApi } from '../../api/api.js';
 import { useToast } from '../ui/useToast.js';
+import { SkeletonStack } from '../ui/Skeletons.jsx';
 
 function InstitutionList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -185,57 +186,56 @@ function InstitutionList() {
             )}
           </div>
         )}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        {loading ? (
+          <SkeletonStack variant="institution" count={3} />
+        ) : (
+          <div className="grid grid-cols-1 gap-8">
+            {filteredInstitutions.length > 0 ? (
+              filteredInstitutions.map(i => (
+                <InstitutionCard
+                  key={i.id}
+                  {...i}
+                  onVisit={() => handleVisitInstitution(i.id)}
+                  onAddContribution={openAddContribution}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center py-24">
+                {selectedLetter || searchTerm.trim() ? (
+                  <div>
+                    <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                      No institutions match your current filters.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSelectedLetter(null);
+                        setSearchTerm('');
+                      }}
+                      className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                      No institutions yet. Add the first institution to get
+                      started.
+                    </p>
+                    <button
+                      onClick={() => navigate('/institution/add')}
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                    >
+                      + Add Institution
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-8">
-          {filteredInstitutions.length > 0 ? (
-            filteredInstitutions.map(i => (
-              <InstitutionCard
-                key={i.id}
-                {...i}
-                onVisit={() => handleVisitInstitution(i.id)}
-                onAddContribution={openAddContribution}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center text-center py-24">
-              {selectedLetter || searchTerm.trim() ? (
-                <div>
-                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
-                    No institutions match your current filters.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSelectedLetter(null);
-                      setSearchTerm('');
-                    }}
-                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm"
-                  >
-                    Clear All Filters
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
-                    No institutions yet. Add the first institution to get
-                    started.
-                  </p>
-                  <button
-                    onClick={() => navigate('/institution/add')}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                  >
-                    + Add Institution
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Contribution Side Modal */}

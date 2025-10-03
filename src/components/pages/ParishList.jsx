@@ -6,6 +6,7 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import { SkeletonStack } from '../ui/Skeletons.jsx';
 
 const ParishList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -139,27 +140,25 @@ const ParishList = () => {
         </div>
       )}
       <div className="space-y-6">
-        {filteredItems.map((c, index) => (
-          <ChurchCard
-            key={c.id}
-            id={index + 1}
-            churchName={c.churchName}
-            place={c.place}
-            vicarName={c.vicarName}
-            contactNumber={c.contactNumber}
-            totalAmount={c.totalAmount}
-            imageUrl={c.imageUrl}
-            forane={foraneNameById.get(c.foraneId) || ''}
-            onVisitParish={() => handleVisitParish(c.id)}
-            className="max-w-4xl mx-auto"
-          />
-        ))}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-        {!loading && filteredItems.length === 0 && (
+        {loading ? (
+          <SkeletonStack variant="church" count={3} />
+        ) : filteredItems.length > 0 ? (
+          filteredItems.map((c, index) => (
+            <ChurchCard
+              key={c.id}
+              id={index + 1}
+              churchName={c.churchName}
+              place={c.place}
+              vicarName={c.vicarName}
+              contactNumber={c.contactNumber}
+              totalAmount={c.totalAmount}
+              imageUrl={c.imageUrl}
+              forane={foraneNameById.get(c.foraneId) || ''}
+              onVisitParish={() => handleVisitParish(c.id)}
+              className="max-w-4xl mx-auto"
+            />
+          ))
+        ) : (
           <div className="text-center text-gray-500 py-10">
             {selectedLetter || searchTerm.trim() ? (
               <div>

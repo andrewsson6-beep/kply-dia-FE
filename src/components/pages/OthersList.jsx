@@ -14,6 +14,7 @@ import {
 } from '../../store/actions/individualActions.js';
 import { useToast } from '../ui/useToast.js';
 import { useNavigate } from 'react-router-dom';
+import { SkeletonGrid } from '../ui/Skeletons.jsx';
 
 const OthersList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -237,7 +238,9 @@ const OthersList = () => {
             {error}
           </div>
         )}
-        {filteredIndividuals.length > 0 ? (
+        {loading ? (
+          <SkeletonGrid variant="individual" count={6} />
+        ) : filteredIndividuals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {filteredIndividuals.map(i => (
               <IndividualCard
@@ -293,11 +296,6 @@ const OthersList = () => {
             >
               &larr; Back
             </button>
-          </div>
-        )}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

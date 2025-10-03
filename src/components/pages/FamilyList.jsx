@@ -8,6 +8,7 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks.js';
 import { domainApi } from '../../api/api.js';
+import { SkeletonGrid } from '../ui/Skeletons.jsx';
 import {
   addContributionThunk,
   addFamilyThunk,
@@ -164,6 +165,8 @@ function FamilyList() {
       : `Families in Community #${cid}`,
   };
 
+  // Use shared skeletons
+
   return (
     <div style={{ paddingTop: headerOffset }}>
       <Header
@@ -246,7 +249,10 @@ function FamilyList() {
             )}
           </div>
         )}
-        {filteredFamilies.length > 0 ? (
+
+        {loading ? (
+          <SkeletonGrid variant="family" count={6} />
+        ) : filteredFamilies.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {filteredFamilies.map(f => (
               <FamilyCard
@@ -278,7 +284,7 @@ function FamilyList() {
                   }}
                   className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm mb-4"
                 >
-                  Clear All Filters
+                  Clear Filters
                 </button>
                 <br />
                 <button
@@ -307,11 +313,6 @@ function FamilyList() {
             >
               &larr; Back
             </button>
-          </div>
-        )}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

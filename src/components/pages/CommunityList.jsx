@@ -11,6 +11,7 @@ import {
   fetchCommunitiesThunk,
 } from '../../store/actions/communityActions.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
+import { SkeletonGrid } from '../ui/Skeletons.jsx';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -236,7 +237,9 @@ const CommunityList = () => {
             )}
           </div>
         )}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <SkeletonGrid variant="community" count={8} columns="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" />
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {filtered.map(c => (
               <CommunityCard
@@ -293,11 +296,7 @@ const CommunityList = () => {
             </button>
           </div>
         )}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+        {/* loading handled by skeleton */}
       </div>
 
       {/* Add Community Side Drawer */}
