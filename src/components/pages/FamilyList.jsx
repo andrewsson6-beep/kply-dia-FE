@@ -100,7 +100,11 @@ function FamilyList() {
     setFamilies(prev => prev.filter(f => f.id !== deletingFamily?.id));
     window.dispatchEvent(
       new CustomEvent('family-changed', {
-        detail: { communityId: cid, familyId: deletingFamily?.id, type: 'deleted' },
+        detail: {
+          communityId: cid,
+          familyId: deletingFamily?.id,
+          type: 'deleted',
+        },
       })
     );
     setDeletingFamily(null);

@@ -6,7 +6,8 @@ import React from 'react';
  * 'institution' (list), 'individual' (grid 1-2 cols)
  */
 
-const basePulse = 'animate-pulse bg-white border border-gray-200 rounded-lg shadow-sm';
+const basePulse =
+  'animate-pulse bg-white border border-gray-200 rounded-lg shadow-sm';
 
 const FamilySkeleton = () => (
   <div className={`${basePulse} p-4 flex flex-col gap-3`}>
@@ -97,7 +98,11 @@ export function EntitySkeletons({ variant, count = 6 }) {
 }
 
 // Convenience grid/list wrappers
-export const SkeletonGrid = ({ variant, count, columns = 'grid-cols-1 md:grid-cols-2' }) => (
+export const SkeletonGrid = ({
+  variant,
+  count,
+  columns = 'grid-cols-1 md:grid-cols-2',
+}) => (
   <div className={`grid ${columns} gap-4 md:gap-6`}>
     <EntitySkeletons variant={variant} count={count} />
   </div>

@@ -72,7 +72,9 @@ const ForaneList = () => {
         onSearchChange={handleSearchChange}
       />
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">Forane List</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+        Forane List
+      </h1>
       {error && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
           {error}

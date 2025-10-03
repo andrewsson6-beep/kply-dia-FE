@@ -238,7 +238,11 @@ const CommunityList = () => {
           </div>
         )}
         {loading ? (
-          <SkeletonGrid variant="community" count={8} columns="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" />
+          <SkeletonGrid
+            variant="community"
+            count={8}
+            columns="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+          />
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {filtered.map(c => (
