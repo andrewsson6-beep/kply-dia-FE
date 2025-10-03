@@ -23,6 +23,10 @@ const FamilyVisit = () => {
   const [editing, setEditing] = useState(null);
   const [showEditFamily, setShowEditFamily] = useState(false);
   const [communityName, setCommunityName] = useState('');
+  const [confirmDeleteFamily, setConfirmDeleteFamily] = useState(false);
+  const [deletingContribution, setDeletingContribution] = useState(null);
+  const [deleteFamilyLoading, setDeleteFamilyLoading] = useState(false);
+  const [deleteContributionLoading, setDeleteContributionLoading] = useState(false);
 
   const loadDetails = async () => {
     setLoading(true);
@@ -102,6 +106,11 @@ const FamilyVisit = () => {
       showToast('Contribution added successfully', { type: 'success' });
       setShowAdd(false);
       await loadDetails();
+      window.dispatchEvent(
+        new CustomEvent('family-changed', {
+          detail: { communityId: Number(communityId), familyId: Number(familyId), type: 'contribution-added' },
+        })
+      );
     } catch (e) {
       showToast(e.message || 'Failed to add contribution', { type: 'error' });
     }
@@ -119,6 +128,11 @@ const FamilyVisit = () => {
       showToast('Contribution updated successfully', { type: 'success' });
       setEditing(null);
       await loadDetails();
+      window.dispatchEvent(
+        new CustomEvent('family-changed', {
+          detail: { communityId: Number(communityId), familyId: Number(familyId), type: 'contribution-updated' },
+        })
+      );
     } catch (e) {
       showToast(e.message || 'Failed to update contribution', {
         type: 'error',
@@ -191,6 +205,12 @@ const FamilyVisit = () => {
             >
               Edit Family
             </button>
+            <button
+              onClick={() => setConfirmDeleteFamily(true)}
+              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
+            >
+              Delete Family
+            </button>
           </div>
         </div>
 
@@ -248,14 +268,49 @@ const FamilyVisit = () => {
                         <td className="py-2 pr-4">{toDMY(r.date)}</td>
                         <td className="py-2 pr-4">{formatINR(r.amount)}</td>
                         <td className="py-2 pr-4">{r.purpose || '-'}</td>
-                        <td className="py-2 pr-4">
+                      <td className="py-2 pr-4">
+                        <div className="flex gap-2">
                           <button
-                            className="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
+                            type="button"
+                            aria-label="Edit Contribution"
+                            title="Edit Contribution"
                             onClick={() => setEditing(r)}
+                            className="group relative inline-flex items-center justify-center h-7 w-7 rounded-md bg-yellow-500 hover:bg-yellow-600 text-white transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-yellow-400"
                           >
-                            Edit
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path d="M13.586 3.586a2 2 0 0 1 2.828 2.828l-8.25 8.25a2 2 0 0 1-.878.512l-3.068.877a.5.5 0 0 1-.62-.62l.877-3.068a2 2 0 0 1 .512-.878l8.25-8.25Z" />
+                              <path d="M5 15.5a.5.5 0 0 0 .5.5H15a.75.75 0 0 1 0 1.5H5.5A2 2 0 0 1 3 15.5V5a.75.75 0 0 1 1.5 0v10.5Z" />
+                            </svg>
+                            <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[10px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
+                              Edit
+                            </span>
                           </button>
-                        </td>
+                          <button
+                            type="button"
+                            aria-label="Delete Contribution"
+                            title="Delete Contribution"
+                            onClick={() => setDeletingContribution(r)}
+                            className="group relative inline-flex items-center justify-center h-7 w-7 rounded-md bg-red-500 hover:bg-red-600 text-white transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-400"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path fillRule="evenodd" d="M9 2a1 1 0 0 0-1 1v1H4.75a.75.75 0 0 0 0 1.5h.443l.89 12.458A2.75 2.75 0 0 0 8.827 21h6.346a2.75 2.75 0 0 0 2.744-2.042L18.807 5.5h.443a.75.75 0 0 0 0-1.5H16V3a1 1 0 0 0-1-1H9Zm2.25 5.75a.75.75 0 0 0-1.5 0l.3 8.5a.75.75 0 0 0 1.5 0l-.3-8.5Zm3 0a.75.75 0 0 0-1.5 0l-.3 8.5a.75.75 0 0 0 1.5 0l.3-8.5Z" clipRule="evenodd" />
+                            </svg>
+                            <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[10px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
+                              Delete
+                            </span>
+                          </button>
+                        </div>
+                      </td>
                       </tr>
                     ))}
                     {!rows.length && (
@@ -345,6 +400,11 @@ const FamilyVisit = () => {
                 showToast('Family updated successfully', { type: 'success' });
                 setShowEditFamily(false);
                 await loadDetails();
+                window.dispatchEvent(
+                  new CustomEvent('family-changed', {
+                    detail: { communityId: Number(communityId), familyId: Number(familyId), type: 'updated' },
+                  })
+                );
               } catch (e) {
                 showToast(e.message || 'Failed to update family', {
                   type: 'error',
@@ -355,6 +415,106 @@ const FamilyVisit = () => {
             communityOptions={communityName ? [communityName] : []}
           />
         )}
+      </Modal>
+
+      {/* Delete Family Confirmation */}
+      <Modal
+        isOpen={confirmDeleteFamily}
+        onClose={() => setConfirmDeleteFamily(false)}
+        title="Delete Family"
+        size="sm"
+        variant="center"
+        contentPointer
+      >
+        <p className="text-sm text-gray-700 mb-4">
+          Are you sure you want to permanently delete this family and its contributions?
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={() => setConfirmDeleteFamily(false)}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={deleteFamilyLoading}
+            onClick={async () => {
+              if (!data || deleteFamilyLoading) return;
+              setDeleteFamilyLoading(true);
+              try {
+                await domainApi.deleteFamily(data.id);
+                showToast('Family deleted successfully', { type: 'success' });
+                setConfirmDeleteFamily(false);
+                window.dispatchEvent(
+                  new CustomEvent('family-changed', {
+                    detail: { communityId: Number(communityId), familyId: Number(familyId), type: 'deleted' },
+                  })
+                );
+                navigate(-1);
+              } catch (e) {
+                showToast(e.message || 'Failed to delete family', { type: 'error' });
+              } finally {
+                setDeleteFamilyLoading(false);
+              }
+            }}
+            className={`flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm shadow inline-flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed`}
+          >
+            {deleteFamilyLoading && (
+              <span className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            Delete
+          </button>
+        </div>
+      </Modal>
+
+      {/* Delete Contribution Confirmation */}
+      <Modal
+        isOpen={!!deletingContribution}
+        onClose={() => setDeletingContribution(null)}
+        title="Delete Contribution"
+        size="sm"
+        variant="center"
+        contentPointer
+      >
+        <p className="text-sm text-gray-700 mb-4">
+          Are you sure you want to delete this contribution?
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={() => setDeletingContribution(null)}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={deleteContributionLoading}
+            onClick={async () => {
+              if (!deletingContribution || deleteContributionLoading) return;
+              setDeleteContributionLoading(true);
+              try {
+                await domainApi.deleteFamilyContribution(deletingContribution.id);
+                showToast('Contribution deleted', { type: 'success' });
+                setDeletingContribution(null);
+                await loadDetails();
+                window.dispatchEvent(
+                  new CustomEvent('family-changed', {
+                    detail: { communityId: Number(communityId), familyId: Number(familyId), type: 'contribution-deleted' },
+                  })
+                );
+              } catch (e) {
+                showToast(e.message || 'Failed to delete contribution', { type: 'error' });
+              } finally {
+                setDeleteContributionLoading(false);
+              }
+            }}
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm shadow inline-flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {deleteContributionLoading && (
+              <span className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            Delete
+          </button>
+        </div>
       </Modal>
     </div>
   );

@@ -80,6 +80,12 @@ function FamilyList() {
       prev.map(f => (f.id === data.id ? { ...f, ...data } : f))
     );
     setEditingFamily(null);
+    // Broadcast change so other views (e.g., open visit tab) can refresh
+    window.dispatchEvent(
+      new CustomEvent('family-changed', {
+        detail: { communityId: cid, familyId: data.id, type: 'updated' },
+      })
+    );
   };
 
   const openDelete = id => {
@@ -92,6 +98,11 @@ function FamilyList() {
       dispatch(deleteFamilyThunk({ communityId: cid, id: deletingFamily.id }));
     // Optimistically update local list (mock delete)
     setFamilies(prev => prev.filter(f => f.id !== deletingFamily?.id));
+    window.dispatchEvent(
+      new CustomEvent('family-changed', {
+        detail: { communityId: cid, familyId: deletingFamily?.id, type: 'deleted' },
+      })
+    );
     setDeletingFamily(null);
   };
 
@@ -99,6 +110,11 @@ function FamilyList() {
     dispatch(addFamilyThunk({ communityId: cid, data })).finally(() => {
       // Refresh from backend so the newly created family appears
       reloadFromCommunityDetails();
+      window.dispatchEvent(
+        new CustomEvent('family-changed', {
+          detail: { communityId: cid, type: 'added' },
+        })
+      );
     });
     setShowAdd(false);
   };
@@ -130,6 +146,18 @@ function FamilyList() {
   // Initial load from community-details (families + name)
   useEffect(() => {
     reloadFromCommunityDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cid]);
+
+  // Listen for cross-page family changes (add/edit/delete or contribution updates)
+  useEffect(() => {
+    const handler = e => {
+      if (e?.detail?.communityId === cid) {
+        reloadFromCommunityDetails();
+      }
+    };
+    window.addEventListener('family-changed', handler);
+    return () => window.removeEventListener('family-changed', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cid]);
 

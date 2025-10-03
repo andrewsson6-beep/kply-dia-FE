@@ -3,7 +3,7 @@ import axios from 'axios';
 // Base URL from env; fallback to local dev
 const API_BASE_URL =
   (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
-  'http://localhost:8000';
+  'https://kply-dia-be-1097781738873.us-central1.run.app';
 
 // Token accessor (injected from store setup)
 let getTokens = () => ({ accessToken: null, sessionUuid: null });
@@ -975,16 +975,6 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  deleteFamily: async (communityId, id) => {
-    await delay(300);
-    const list = mockFamilies[communityId] || [];
-    const idx = list.findIndex(f => f.id === id);
-    if (idx !== -1) {
-      const removed = list.splice(idx, 1)[0];
-      return removed;
-    }
-    throw new Error('Family not found');
-  },
   addContribution: async (communityId, familyId, data) => {
     await delay(300);
     const list = mockFamilies[communityId] || [];
@@ -1094,6 +1084,48 @@ export const domainApi = {
           (typeof data === 'string' && data) ||
             msg ||
             'Failed to update family contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  deleteFamily: async fam_id => {
+    try {
+      const res = await axiosInstance.post('/delete-family', { fam_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete family');
+      }
+      return data || true;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to delete family'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  deleteFamilyContribution: async fcon_id => {
+    try {
+      const res = await axiosInstance.post('/delete-family-contribution', {
+        fcon_id,
+      });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete contribution');
+      }
+      return data || true;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to delete contribution'
         );
       }
       throw new Error(error.message || 'Network error');
