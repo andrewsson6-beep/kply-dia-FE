@@ -82,6 +82,13 @@ const parishSlice = createSlice({
       .addCase(deleteParishThunk.fulfilled, (state, action) => {
         const id = action.payload;
         state.items = state.items.filter(p => p.id !== id);
+        // Remove from any forane-specific cached lists
+        Object.keys(state.byForane || {}).forEach(fid => {
+          const bucket = state.byForane[fid];
+          if (bucket && Array.isArray(bucket.items)) {
+            bucket.items = bucket.items.filter(p => p.id !== id);
+          }
+        });
       })
       .addCase(deleteParishThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to delete parish';
