@@ -4,7 +4,10 @@ import Header from '../layout/Header';
 import { useNavigate } from 'react-router-dom';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
-import { fetchForanesThunk, deleteForaneThunk } from '../../store/actions/foraneActions.js';
+import {
+  fetchForanesThunk,
+  deleteForaneThunk,
+} from '../../store/actions/foraneActions.js';
 import { SkeletonStack } from '../ui/Skeletons.jsx';
 import { useToast } from '../ui/useToast.js';
 
@@ -63,7 +66,9 @@ const ForaneList = () => {
       showToast('Forane deleted successfully', { type: 'success' });
       // Optional: broadcast event for other views
       window.dispatchEvent(
-        new CustomEvent('forane-changed', { detail: { foraneId: id, type: 'deleted' } })
+        new CustomEvent('forane-changed', {
+          detail: { foraneId: id, type: 'deleted' },
+        })
       );
     } else {
       showToast(action.payload || 'Failed to delete forane', { type: 'error' });

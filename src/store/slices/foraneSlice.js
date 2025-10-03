@@ -1,5 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchForanesThunk, addForaneThunk, deleteForaneThunk } from '../actions/foraneActions.js';
+import {
+  fetchForanesThunk,
+  addForaneThunk,
+  deleteForaneThunk,
+} from '../actions/foraneActions.js';
 
 const initialState = {
   items: [],

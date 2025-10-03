@@ -310,7 +310,7 @@ const ChurchCard = ({
       {showDelete && (
         <Modal
           isOpen={showDelete}
-            onClose={() => (deleting ? null : setShowDelete(false))}
+          onClose={() => (deleting ? null : setShowDelete(false))}
           title="Delete Parish"
           size="sm"
           variant="center"

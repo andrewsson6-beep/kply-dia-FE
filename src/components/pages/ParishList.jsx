@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
-import { fetchParishesThunk, deleteParishThunk } from '../../store/actions/parishActions.js';
+import {
+  fetchParishesThunk,
+  deleteParishThunk,
+} from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 import { useToast } from '../ui/useToast.js';
 import { SkeletonStack } from '../ui/Skeletons.jsx';
