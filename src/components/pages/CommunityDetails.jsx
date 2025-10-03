@@ -5,7 +5,12 @@ import CommunityForm from '../forms/CommunityForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { domainApi } from '../../api/api.js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
-import { updateCommunityThunk } from '../../store/actions/communityActions.js';
+import {
+  updateCommunityThunk,
+  deleteCommunityThunk,
+} from '../../store/actions/communityActions.js';
+import Modal from '../ui/Modal';
+import { useToast } from '../ui/useToast.js';
 
 // Community Details page (skeleton similar to Individual/Institution visit pages)
 // Shows basic meta and totals; future: contributions at community level if API exists.
@@ -21,6 +26,9 @@ const CommunityDetails = () => {
   const [data, setData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { showToast } = useToast();
 
   const load = async () => {
     setLoading(true);
@@ -124,9 +132,7 @@ const CommunityDetails = () => {
               {isEditing ? 'Editing...' : 'Edit Community'}
             </button>
             <button
-              onClick={() => {
-                /* future: delete community */
-              }}
+              onClick={() => setConfirmDelete(true)}
               className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
             >
               Delete Community
@@ -202,6 +208,81 @@ const CommunityDetails = () => {
           </div>
         ) : null}
       </div>
+      {/* Delete Community Confirmation */}
+      <Modal
+        isOpen={confirmDelete}
+        onClose={() => (deleting ? null : setConfirmDelete(false))}
+        title="Delete Community"
+        size="sm"
+        variant="center"
+        contentPointer
+        closeOnBackdrop={!deleting}
+      >
+        <p className="text-sm text-gray-700 mb-4">
+          Are you sure you want to permanently delete this community? This
+          action cannot be undone. All families under it will become
+          inaccessible from this context.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            disabled={deleting}
+            onClick={() => !deleting && setConfirmDelete(false)}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={deleting}
+            onClick={async () => {
+              if (deleting) return;
+              setDeleting(true);
+              try {
+                const action = await dispatch(
+                  deleteCommunityThunk({
+                    parentType: 'parish',
+                    parentId: Number(parishId),
+                    id: Number(communityId),
+                  })
+                );
+                if (deleteCommunityThunk.fulfilled.match(action)) {
+                  showToast('Community deleted successfully', {
+                    type: 'success',
+                  });
+                  // Broadcast event so lists refresh
+                  window.dispatchEvent(
+                    new CustomEvent('community-changed', {
+                      detail: {
+                        parishId: Number(parishId),
+                        communityId: Number(communityId),
+                        type: 'deleted',
+                      },
+                    })
+                  );
+                  // Navigate back to the community list for this parish
+                  navigate(`/parish/list/${parishId}/community/list`);
+                } else {
+                  showToast(action.payload || 'Failed to delete community', {
+                    type: 'error',
+                  });
+                }
+              } catch (e) {
+                showToast(e.message || 'Failed to delete community', {
+                  type: 'error',
+                });
+              } finally {
+                setDeleting(false);
+                setConfirmDelete(false);
+              }
+            }}
+            className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-red-400 flex items-center justify-center gap-2"
+          >
+            {deleting && (
+              <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            Delete
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

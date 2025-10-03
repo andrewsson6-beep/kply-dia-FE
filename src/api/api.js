@@ -888,6 +888,27 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  deleteCommunity: async com_id => {
+    try {
+      const res = await axiosInstance.post('/delete-community', { com_id });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete community');
+      }
+      return data || true;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to delete community'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchFamilies: async communityId => {
     await delay(400);
     return [...(mockFamilies[communityId] || [])];

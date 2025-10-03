@@ -94,6 +94,17 @@ const CommunityList = () => {
     dispatch,
   ]);
 
+  // Listen for community-changed events (e.g., deletion) to refresh list
+  useEffect(() => {
+    const handler = e => {
+      if (e?.detail?.parishId === parentId) {
+        dispatch(fetchCommunitiesThunk({ parentType, parentId }));
+      }
+    };
+    window.addEventListener('community-changed', handler);
+    return () => window.removeEventListener('community-changed', handler);
+  }, [dispatch, parentType, parentId]);
+
   // Ensure parishes are loaded so we can show parish name in the form
   useEffect(() => {
     if (!inForaneContext && !parishState.loaded && !parishState.loading) {

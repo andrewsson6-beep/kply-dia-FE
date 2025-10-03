@@ -3,6 +3,7 @@ import {
   addCommunityThunk,
   fetchCommunitiesThunk,
   updateCommunityThunk,
+  deleteCommunityThunk,
 } from '../actions/communityActions.js';
 
 // State keyed by parent "type:id"
@@ -71,6 +72,14 @@ const communitySlice = createSlice({
             ...updated,
           };
         }
+      })
+      .addCase(deleteCommunityThunk.fulfilled, (state, action) => {
+        const { parentType, parentId, id } = action.payload;
+        const key = `${parentType}:${parentId}`;
+        ensureParent(state, key);
+        state.byParent[key].items = state.byParent[key].items.filter(
+          c => c.id !== id
+        );
       });
   },
 });

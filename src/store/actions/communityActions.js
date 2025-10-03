@@ -36,3 +36,15 @@ export const updateCommunityThunk = createAsyncThunk(
     }
   }
 );
+
+export const deleteCommunityThunk = createAsyncThunk(
+  'community/delete',
+  async ({ parentType, parentId, id }, { rejectWithValue }) => {
+    try {
+      await domainApi.deleteCommunity(id);
+      return { parentType, parentId, id };
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to delete community');
+    }
+  }
+);

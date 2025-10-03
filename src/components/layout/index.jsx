@@ -51,6 +51,8 @@ const Layout = () => {
           <Route path="/forane/list" element={<ForaneList />} />
           <Route path="/forane/add" element={<AddForane />} />
           <Route path="/parish/list" element={<ParishList />} />
+          {/* Allow /parish/list/:parishId to still show Parishes (fallback) */}
+          <Route path="/parish/list/:parishId" element={<ParishList />} />
           <Route path="/parish/add" element={<AddParish />} />
           {/* Forane -> Parishes under this Forane */}
           <Route
