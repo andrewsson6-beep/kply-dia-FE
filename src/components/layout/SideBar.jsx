@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { menuItems } from '../../constants';
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
+import Modal from '../ui/Modal.jsx';
+import { useAppDispatch } from '../../store/hooks.js';
+import { logoutThunk } from '../../store/actions/authActions.js';
 
 const SideBar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [expandedMenus, setExpandedMenus] = useState([]);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const toggleSubmenu = label => {
     setExpandedMenus(prev =>
@@ -43,6 +50,25 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
       toggleSidebar();
+    }
+  };
+
+  const openLogoutModal = () => setIsLogoutOpen(true);
+  const closeLogoutModal = () => setIsLogoutOpen(false);
+  const confirmLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await dispatch(logoutThunk());
+      // Close modal and sidebar (on mobile) then navigate to login
+      setIsLogoutOpen(false);
+      if (window.innerWidth < 1024) toggleSidebar();
+      navigate('/login', { replace: true });
+    } catch {
+      // no-op; logoutThunk already clears state even on failure
+      setIsLogoutOpen(false);
+      navigate('/login', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -142,6 +168,18 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
                         </ul>
                       )}
                     </>
+                  ) : item.path === '/logout' ? (
+                    /* Logout triggers a confirmation modal instead of navigation */
+                    <button
+                      type="button"
+                      onClick={openLogoutModal}
+                      className={`w-full text-left flex items-center space-x-3 p-3 rounded-lg transition-colors text-gray-600 hover:bg-red-50 hover:text-red-700`}
+                    >
+                      <span className="text-lg w-5 flex justify-center">
+                        <item.icon />
+                      </span>
+                      <span className="font-medium">{item.label}</span>
+                    </button>
                   ) : (
                     /* Regular menu item without submenu */
                     <Link
@@ -165,6 +203,38 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
           </ul>
         </nav>
       </aside>
+      {/* Logout confirmation modal */}
+      <Modal
+        isOpen={isLogoutOpen}
+        onClose={isLoggingOut ? () => {} : closeLogoutModal}
+        title="Confirm Logout"
+        size="sm"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to log out? You’ll need to sign in again to
+            continue.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={closeLogoutModal}
+              disabled={isLoggingOut}
+              className="px-3 py-2 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmLogout}
+              disabled={isLoggingOut}
+              className="px-3 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {isLoggingOut ? 'Logging out…' : 'Log out'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };
