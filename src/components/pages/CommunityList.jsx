@@ -75,7 +75,7 @@ const CommunityList = () => {
         error: null,
       }
   );
-  const { items, loading, error } = communityState;
+  const { items, loading } = communityState;
   const parishState = useAppSelector(state => state.parish);
   const foraneState = useAppSelector(state => state.forane);
   const parishName = useAppSelector(state => {

@@ -63,11 +63,8 @@ function App() {
 
   // For any non-auth route, if not authenticated redirect to login
   if (!isAuthenticated) {
-    return (
-      <Routes>
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
+    // Render a single Navigate to avoid mounting a Routes with wildcard that can re-trigger routing
+    return <Navigate to="/login" replace />;
   }
 
   return (

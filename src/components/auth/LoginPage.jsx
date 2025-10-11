@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { useAppDispatch, useAuth } from '../../store/hooks.js';
+import {
+  useAppDispatch,
+  useAuth,
+  useIsAuthenticated,
+} from '../../store/hooks.js';
 import { clearError } from '../../store/slices/authSlice.js';
 import { loginThunk } from '../../store/actions/authActions.js';
 import bgImage from '../../assets/images/sky_mmt.jpg';
@@ -14,7 +18,10 @@ import logo from '../../assets/images/mmtlogo.svg';
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, isLoading, error } = useAuth();
+  // Use computed auth (respects token expiry) to avoid redirect loops
+  const isAuthenticated = useIsAuthenticated();
+  // Still read loading/error from raw auth slice state
+  const { isLoading, error } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});

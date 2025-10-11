@@ -43,6 +43,8 @@ axiosInstance.interceptors.request.use(config => {
   return config;
 });
 
+let lastUnauthorizedAt = 0;
+
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
@@ -54,8 +56,18 @@ axiosInstance.interceptors.response.use(
       code === 401 ||
       /token invalid/i.test(String(msg))
     ) {
+      // Only trigger unauthorized handler if we actually have a token set; this helps prevent redundant clears
+      const { accessToken } = getTokens() || {};
+      // Basic throttle: if we already handled an unauthorized very recently, skip
+      const now = Date.now();
+      if (now - lastUnauthorizedAt < 1000) {
+        return Promise.reject(error);
+      }
       try {
-        onUnauthorized && onUnauthorized();
+        if (accessToken && onUnauthorized) {
+          lastUnauthorizedAt = now;
+          onUnauthorized();
+        }
       } catch {
         // no-op
       }
