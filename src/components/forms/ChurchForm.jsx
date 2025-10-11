@@ -10,6 +10,7 @@ const ChurchForm = ({
   isEdit = false,
   showForaneField = false,
   foraneOptions = [],
+  foraneReadOnly = false,
 }) => {
   // Exclude totalAmount from being part of the form state / submission
   const { totalAmount: _omitTotalAmount, ...restInitialData } =
@@ -75,7 +76,8 @@ const ChurchForm = ({
       newErrors.contactNumber = 'Contact number is required';
 
     // Validate forane if field is shown
-    if (showForaneField && !formData.forane.trim()) {
+    // Only require forane when the field is shown and editable
+    if (showForaneField && !foraneReadOnly && !formData.forane.trim()) {
       newErrors.forane = 'Forane selection is required';
     }
 
@@ -179,21 +181,29 @@ const ChurchForm = ({
                   )}
                 </div>
 
-                {/* Forane Field - Optional */}
+                {/* Forane Field - Optional (can be read-only in edit mode) */}
                 {showForaneField && (
                   <div className="flex-shrink-0">
                     <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                      Select Forane*
+                      {foraneReadOnly ? 'Forane (read-only)' : 'Select Forane*'}
                     </label>
                     <select
                       name="forane"
                       value={formData.forane}
-                      onChange={handleInputChange}
-                      className={`w-full bg-gray-100 rounded-md p-2 text-gray-800 text-xs sm:text-sm border ${
-                        errors.forane
-                          ? 'border-red-400 bg-red-50'
-                          : 'border-transparent focus:border-blue-400'
-                      } focus:outline-none focus:bg-white transition-colors`}
+                      onChange={foraneReadOnly ? undefined : handleInputChange}
+                      disabled={!!foraneReadOnly}
+                      className={`w-full rounded-md p-2 text-gray-800 text-xs sm:text-sm border ${
+                        foraneReadOnly
+                          ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                          : errors.forane
+                            ? 'bg-red-50 border-red-400'
+                            : 'bg-gray-100 border-transparent focus:border-blue-400 focus:bg-white'
+                      } transition-colors`}
+                      title={
+                        foraneReadOnly
+                          ? 'Forane cannot be changed when editing'
+                          : 'Select forane'
+                      }
                     >
                       <option value="">Select a forane</option>
                       {foraneOptions.map((forane, index) => (

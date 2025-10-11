@@ -431,6 +431,38 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  updateParish: async payload => {
+    // payload: { par_code, par_name, par_location, par_vicar_name, par_contact_number, par_id }
+    try {
+      const res = await axiosInstance.post('/update-parish-details', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update parish'
+        );
+      }
+      const src = data && typeof data === 'object' ? data : payload;
+      return {
+        id: Number(src.par_id),
+        churchName: src.par_name || '',
+        place: src.par_location || '',
+        vicarName: src.par_vicar_name || '',
+        contactNumber: src.par_contact_number || '',
+        foraneId: src.par_for_id ?? undefined,
+        code: src.par_code || '',
+        totalAmount: undefined,
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update parish'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchInstitutions: async () => {
     try {
       const res = await axiosInstance.get('/institution/institution-list');
@@ -889,11 +921,13 @@ export const domainApi = {
         parish_id: parentId,
       });
       const { code, data, msg } = res.data || {};
-      if (code !== 200 || !Array.isArray(data)) {
+      if (code !== 200) {
         throw new Error(msg || 'Failed to load communities');
       }
+      // Some backends return a string message when empty (e.g., 'No Communities Present')
+      const list = Array.isArray(data) ? data : [];
       // Map API rows to UI model
-      const items = data.map(row => ({
+      const items = list.map(row => ({
         id: row.com_id,
         number: row.com_unique_no,
         name: row.com_name,

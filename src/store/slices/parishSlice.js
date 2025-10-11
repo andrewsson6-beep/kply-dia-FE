@@ -4,6 +4,7 @@ import {
   addParishThunk,
   fetchParishesByForaneThunk,
   deleteParishThunk,
+  updateParishThunk,
 } from '../actions/parishActions.js';
 
 const initialState = {
@@ -92,6 +93,43 @@ const parishSlice = createSlice({
       })
       .addCase(deleteParishThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to delete parish';
+      })
+      .addCase(updateParishThunk.fulfilled, (state, action) => {
+        const u = action.payload; // { id, churchName, place, vicarName, contactNumber, foraneId }
+        state.items = state.items.map(p =>
+          p.id === u.id
+            ? {
+                ...p,
+                churchName: u.churchName,
+                place: u.place,
+                vicarName: u.vicarName,
+                contactNumber: u.contactNumber,
+                foraneId: u.foraneId ?? p.foraneId,
+                code: u.code ?? p.code,
+              }
+            : p
+        );
+        Object.keys(state.byForane || {}).forEach(fid => {
+          const bucket = state.byForane[fid];
+          if (bucket && Array.isArray(bucket.items)) {
+            bucket.items = bucket.items.map(p =>
+              p.id === u.id
+                ? {
+                    ...p,
+                    churchName: u.churchName,
+                    place: u.place,
+                    vicarName: u.vicarName,
+                    contactNumber: u.contactNumber,
+                    foraneId: u.foraneId ?? p.foraneId,
+                    code: u.code ?? p.code,
+                  }
+                : p
+            );
+          }
+        });
+      })
+      .addCase(updateParishThunk.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update parish';
       });
   },
 });

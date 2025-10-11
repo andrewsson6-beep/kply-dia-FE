@@ -48,3 +48,15 @@ export const deleteParishThunk = createAsyncThunk(
     }
   }
 );
+
+export const updateParishThunk = createAsyncThunk(
+  'parish/update',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const updated = await domainApi.updateParish(payload);
+      return updated; // normalized parish
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to update parish');
+    }
+  }
+);
