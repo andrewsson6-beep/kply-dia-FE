@@ -218,6 +218,38 @@ const formatINR = val => {
 };
 
 export const domainApi = {
+  updateForane: async payload => {
+    // payload: { for_id, for_name, for_location, for_vicar_name, for_contact_number }
+    try {
+      const res = await axiosInstance.post('/update-forane-details', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update forane'
+        );
+      }
+      const id = payload.for_id;
+      // Prefer API data when available, else echo payload
+      const src = data && typeof data === 'object' ? data : payload;
+      return {
+        id: Number(src.for_id ?? id),
+        churchName: src.for_name ?? payload.for_name ?? '',
+        place: src.for_location ?? payload.for_location ?? '',
+        vicarName: src.for_vicar_name ?? payload.for_vicar_name ?? '',
+        contactNumber:
+          src.for_contact_number ?? payload.for_contact_number ?? '',
+      };
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update forane'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   fetchForanes: async () => {
     try {
       const res = await axiosInstance.get('/forane-list');

@@ -30,7 +30,7 @@ function App() {
 
   // Redirect root to login page
   if (location.pathname === '/') {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
   }
 
   if (isAuthRoute) {
@@ -74,7 +74,6 @@ function App() {
     <Routes>
       {/* All non-auth routes fall under the existing layout */}
       <Route path="/*" element={<Layout />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

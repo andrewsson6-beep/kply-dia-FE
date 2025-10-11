@@ -18,6 +18,7 @@ import IndividualVisit from '../pages/IndividualVisit';
 import UserProfile from '../pages/UserProfile';
 import CommunityDetails from '../pages/CommunityDetails';
 import FamilyVisit from '../pages/FamilyVisit';
+import { Navigate } from 'react-router-dom';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -92,6 +93,8 @@ const Layout = () => {
             path="/parish/list/:parishId/community/:communityId/family/:familyId/visit"
             element={<FamilyVisit />}
           />
+          {/* Fallback inside layout for any unknown route */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/parish/list/:parishId/community/:communityId/details"
             element={<CommunityDetails />}

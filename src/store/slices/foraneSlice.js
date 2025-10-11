@@ -3,6 +3,7 @@ import {
   fetchForanesThunk,
   addForaneThunk,
   deleteForaneThunk,
+  updateForaneThunk,
 } from '../actions/foraneActions.js';
 
 const initialState = {
@@ -53,6 +54,34 @@ const foraneSlice = createSlice({
       })
       .addCase(deleteForaneThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to delete forane';
+      })
+      .addCase(updateForaneThunk.fulfilled, (state, action) => {
+        const u = action.payload; // { id, churchName, place, vicarName, contactNumber }
+        // Update items list entry if present
+        state.items = state.items.map(f =>
+          f.id === u.id
+            ? {
+                ...f,
+                churchName: u.churchName,
+                place: u.place,
+                vicarName: u.vicarName,
+                contactNumber: u.contactNumber,
+              }
+            : f
+        );
+        // Update nameOptions entry
+        state.nameOptions = state.nameOptions.map(o =>
+          o.id === u.id
+            ? {
+                ...o,
+                name: u.churchName,
+                location: u.place,
+              }
+            : o
+        );
+      })
+      .addCase(updateForaneThunk.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update forane';
       });
   },
 });
