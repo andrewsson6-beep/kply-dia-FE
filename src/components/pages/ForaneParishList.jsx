@@ -191,6 +191,8 @@ const ForaneParishList = () => {
               totalAmount={c.totalAmount}
               imageUrl={c.imageUrl}
               forane={foraneNameById.get(c.foraneId) || ''}
+              reportEntityType="parish"
+              reportEntityId={c.id}
               onVisitParish={() => handleVisitParish(c.id)}
               className="max-w-4xl mx-auto"
               visitLabel="VISIT PARISH"

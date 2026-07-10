@@ -253,6 +253,27 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  fetchContributionReport: async payload => {
+    try {
+      const res = await axiosInstance.post('/contribution-report', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to generate contribution report');
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to generate contribution report'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   addForane: async payload => {
     try {
       const res = await axiosInstance.post('/add-new-forane', payload);

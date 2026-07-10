@@ -137,6 +137,8 @@ const ForaneList = () => {
             vicarName={c.vicarName}
             contactNumber={c.contactNumber}
             totalAmount={c.totalAmount}
+            reportEntityType="forane"
+            reportEntityId={c.id}
             onVisitParish={() => handleVisitForane(c.id)}
             visitLabel="VISIT FORANE"
             className="max-w-4xl mx-auto"

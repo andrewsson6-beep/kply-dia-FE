@@ -10,11 +10,64 @@ export interface FamilyReceiptData {
   generatedBy?: string;
   generatedAt?: Date;
   parish: string;
+  reportPeriod?: {
+    from?: string;
+    to?: string;
+  };
 }
 
 export interface ReceiptOptions {
   mode?: 'download' | 'print'; // default download
   filename?: string; // optional override
+  detailLevel?: 'summary' | 'detail';
+}
+
+export interface ContributionReportData {
+  period?: {
+    from_year?: number | string;
+    to_year?: number | string;
+    from_date?: string;
+    to_date?: string;
+  };
+  entity?: {
+    type?: string;
+    id?: number | string;
+    code?: string;
+    name?: string;
+    par_location?: string;
+    par_vicar_name?: string;
+    for_location?: string;
+    for_vicar_name?: string;
+    address?: string;
+    location?: string;
+    vicar_name?: string;
+    contact_number?: string | null;
+    house_name?: string;
+    head_name?: string;
+    phone_number?: string | null;
+    community?: {
+      id?: number | string;
+      code?: string;
+      name?: string;
+    };
+  };
+  summary?: {
+    total_amount?: string | number;
+    total_count?: string | number;
+  };
+  contributions?: Array<{
+    id?: number | string;
+    source_type?: string;
+    source_id?: number | string;
+    source_name?: string;
+    amount?: string | number;
+    date?: string;
+    purpose?: string;
+    family?: { code?: string; house_name?: string; head_name?: string };
+    community?: { code?: string; name?: string };
+    parish?: { code?: string; name?: string };
+    forane?: { code?: string; name?: string };
+  }>;
 }
 
 export interface GenericReceiptField {
@@ -68,6 +121,32 @@ const formatCurrency = (value: string | number | null | undefined) => {
 };
 
 const BASE_BADGE = 'MMT HOSPITAL DONATION RECEIPT';
+
+const saveOrPrintDoc = (doc: jsPDF, options: ReceiptOptions, name: string) => {
+  if (options.mode === 'print') {
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url);
+    if (win) {
+      win.onload = () => {
+        win.focus();
+        win.print();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      };
+    } else {
+      doc.save(name);
+    }
+  } else {
+    doc.save(options.filename || name);
+  }
+};
+
+const parseAmount = (value: string | number | null | undefined) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const cleaned = String(value ?? '').replace(/[^0-9.-]/g, '');
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 // Format dates as DD/MM/YYYY from common date/time strings
 const formatDateOnly = (value: string | Date): string => {
@@ -363,6 +442,429 @@ export const buildGenericReceiptPdf = (
   return doc;
 };
 
+export const buildContributionReportPdf = (
+  report: ContributionReportData,
+  detailLevel: 'summary' | 'detail' = 'summary'
+): jsPDF => {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const marginTop = 52;
+  const bottomY = pageHeight - 58;
+  let cursorY = marginTop;
+
+  const primary = '#1f4e79';
+  const grayDark = '#111827';
+  const gray = '#6b7280';
+  const lightGray = '#f6f8fb';
+  const line = '#d8dee8';
+  const green = '#0f766e';
+
+  const clean = (value: unknown) =>
+    String(value ?? '-')
+      .replace(/\s+/g, ' ')
+      .trim() || '-';
+  const titleCase = (value: unknown) =>
+    clean(value).replace(/\b\w/g, char => char.toUpperCase());
+  const period = report.period || {};
+  const entity = report.entity || {};
+  const summary = report.summary || {};
+  const contributions = Array.isArray(report.contributions)
+    ? report.contributions
+    : [];
+  const periodText =
+    period.from_year && period.to_year
+      ? `${period.from_year} - ${period.to_year}`
+      : '-';
+  const isDetailed = detailLevel === 'detail';
+
+  const entityDetails = [
+    {
+      label: 'Location',
+      value:
+        entity.par_location ||
+        entity.for_location ||
+        entity.location ||
+        entity.address,
+    },
+    {
+      label: 'Vicar',
+      value: entity.par_vicar_name || entity.for_vicar_name || entity.vicar_name,
+    },
+    {
+      label: 'Contact',
+      value: entity.contact_number || entity.phone_number,
+    },
+    {
+      label: 'House Name',
+      value: entity.house_name,
+    },
+    {
+      label: 'Family Head',
+      value: entity.head_name,
+    },
+    {
+      label: 'Community',
+      value: entity.community?.name,
+    },
+  ].filter(item => clean(item.value) !== '-');
+
+  const groupContributions = (keyGetter: (item: any) => string) => {
+    const map = new Map<string, { label: string; count: number; amount: number }>();
+    contributions.forEach(item => {
+      const label = clean(keyGetter(item));
+      const current = map.get(label) || { label, count: 0, amount: 0 };
+      current.count += 1;
+      current.amount += parseAmount(item.amount);
+      map.set(label, current);
+    });
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  };
+
+  const ensurePage = (needed = 32) => {
+    if (cursorY + needed <= bottomY) return;
+    doc.addPage();
+    cursorY = marginTop;
+  };
+
+  const drawFooter = () => {
+    const pageCount = doc.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(gray);
+      doc.text(
+        `Generated: ${new Date().toLocaleString()}   Page ${page} of ${pageCount}`,
+        marginX,
+        pageHeight - 28
+      );
+    }
+  };
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(primary);
+  doc.text('ARDRAM', marginX, cursorY - 8);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(grayDark);
+  doc.text('Donation Contribution Report', marginX, cursorY + 16);
+
+  doc.setDrawColor(primary);
+  doc.setLineWidth(1.5);
+  doc.line(marginX, cursorY + 28, pageWidth - marginX, cursorY + 28);
+
+  cursorY += 52;
+  const entityName =
+    clean(entity.type) === 'family' &&
+    (clean(entity.head_name) !== '-' || clean(entity.house_name) !== '-')
+      ? [entity.head_name, entity.house_name]
+          .map(clean)
+          .filter(value => value !== '-')
+          .join(', ')
+      : clean(entity.name);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(grayDark);
+  const wrappedTitle = doc.splitTextToSize(entityName, pageWidth - marginX * 2);
+  doc.text(wrappedTitle, marginX, cursorY);
+  cursorY += wrappedTitle.length * 18 + 8;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(gray);
+  doc.text(
+    `${titleCase(entity.type)}${entity.code ? ` | ${entity.code}` : ''}`,
+    marginX,
+    cursorY
+  );
+  cursorY += 18;
+
+  if (entityDetails.length) {
+    const detailColWidth = (pageWidth - marginX * 2) / 2;
+    const detailRowHeight = 42;
+    const detailPanelHeight =
+      Math.ceil(entityDetails.length / 2) * detailRowHeight;
+    doc.setFillColor(lightGray);
+    doc.roundedRect(
+      marginX,
+      cursorY,
+      pageWidth - marginX * 2,
+      detailPanelHeight,
+      4,
+      4,
+      'F'
+    );
+    doc.setDrawColor(line);
+    doc.roundedRect(
+      marginX,
+      cursorY,
+      pageWidth - marginX * 2,
+      detailPanelHeight,
+      4,
+      4,
+      'S'
+    );
+    entityDetails.forEach((item, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      const x = marginX + 14 + col * detailColWidth;
+      const y = cursorY + row * detailRowHeight;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(gray);
+      doc.text(item.label.toUpperCase(), x, y + 16);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(grayDark);
+      const wrapped = doc.splitTextToSize(clean(item.value), detailColWidth - 28);
+      doc.text(wrapped.slice(0, 1), x, y + 32);
+    });
+    cursorY += detailPanelHeight + 16;
+  }
+
+  const cardGap = 12;
+  const cardWidth = (pageWidth - marginX * 2 - cardGap) / 2;
+  const drawSummaryCard = (
+    x: number,
+    label: string,
+    value: string,
+    color = grayDark
+  ) => {
+    doc.setFillColor('#ffffff');
+    doc.roundedRect(x, cursorY, cardWidth, 58, 4, 4, 'F');
+    doc.setDrawColor(line);
+    doc.roundedRect(x, cursorY, cardWidth, 58, 4, 4, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(gray);
+    doc.text(label.toUpperCase(), x + 12, cursorY + 18);
+    doc.setFontSize(15);
+    doc.setTextColor(color);
+    doc.text(value, x + 12, cursorY + 42);
+  };
+
+  drawSummaryCard(
+    marginX,
+    'Total Contribution',
+    formatCurrency(summary.total_amount),
+    green
+  );
+  drawSummaryCard(
+    marginX + cardWidth + cardGap,
+    'Year Range',
+    periodText
+  );
+  cursorY += 82;
+
+  doc.setDrawColor(line);
+  doc.setLineWidth(0.8);
+  doc.line(marginX, cursorY - 18, pageWidth - marginX, cursorY - 18);
+
+  if (!isDetailed) {
+    if (!contributions.length) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(gray);
+      doc.text(
+        'No contributions found for the selected period.',
+        marginX,
+        cursorY
+      );
+      drawFooter();
+      return doc;
+    }
+
+    const primaryGroups =
+      clean(entity.type) === 'forane'
+        ? groupContributions(item => item.parish?.name || item.source_name)
+        : clean(entity.type) === 'parish'
+          ? groupContributions(item => item.community?.name || item.source_name)
+          : groupContributions(item => item.source_name);
+    const yearGroups = groupContributions(item =>
+      String(item.date || '').slice(0, 4) || 'Unknown Year'
+    ).sort((a, b) => clean(a.label).localeCompare(clean(b.label)));
+
+    const drawSummaryTable = (
+      title: string,
+      labelHeader: string,
+      rows: Array<{ label: string; count: number; amount: number }>
+    ) => {
+      ensurePage(80);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(grayDark);
+      doc.text(title, marginX, cursorY);
+      cursorY += 14;
+
+      const tableLeft = marginX;
+      const tableRight = pageWidth - marginX;
+      const labelX = tableLeft + 10;
+      const amountX = tableRight - 10;
+      const headerHeight = 24;
+      const rowHeight = 24;
+
+      doc.setFillColor('#eef3f8');
+      doc.rect(tableLeft, cursorY, tableRight - tableLeft, headerHeight, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(primary);
+      doc.text(labelHeader.toUpperCase(), labelX, cursorY + 16);
+      doc.text('AMOUNT', amountX, cursorY + 16, { align: 'right' });
+      cursorY += headerHeight;
+
+      rows.forEach((row, index) => {
+        ensurePage(rowHeight + 20);
+        if (index % 2 === 1) {
+          doc.setFillColor('#fbfcfe');
+          doc.rect(tableLeft, cursorY, tableRight - tableLeft, rowHeight, 'F');
+        }
+        doc.setDrawColor('#eef1f5');
+        doc.line(tableLeft, cursorY + rowHeight, tableRight, cursorY + rowHeight);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(grayDark);
+        const wrappedLabel = doc.splitTextToSize(clean(row.label), 390);
+        doc.text(wrappedLabel.slice(0, 1), labelX, cursorY + 16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(formatCurrency(row.amount), amountX, cursorY + 16, {
+          align: 'right',
+        });
+        cursorY += rowHeight;
+      });
+      cursorY += 18;
+    };
+
+    drawSummaryTable('Contributions Over the Years', 'Year', yearGroups);
+    drawSummaryTable(
+      clean(entity.type) === 'forane'
+        ? 'Contributions from Parishes Over the Years'
+        : clean(entity.type) === 'parish'
+          ? 'Contributions from Communities Over the Years'
+          : 'Contributions by Contributor',
+      clean(entity.type) === 'forane'
+        ? 'Parish'
+        : clean(entity.type) === 'parish'
+          ? 'Community'
+          : 'Contributor',
+      primaryGroups
+    );
+
+    drawFooter();
+    return doc;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(grayDark);
+  doc.text('Contribution Details', marginX, cursorY);
+  cursorY += 20;
+
+  if (!contributions.length) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(gray);
+    doc.text('No contributions found for the selected period.', marginX, cursorY);
+    drawFooter();
+    return doc;
+  }
+
+  const columns = {
+    date: marginX + 8,
+    contributor: marginX + 74,
+    context: marginX + 242,
+    amount: pageWidth - marginX - 8,
+  };
+  const tableLeft = marginX;
+  const tableWidth = pageWidth - marginX * 2;
+  const headerHeight = 26;
+  const rowHeight = 38;
+  const amountGutterWidth = 92;
+  const contextWidth = columns.amount - amountGutterWidth - columns.context;
+
+  const drawHeader = () => {
+    doc.setFillColor('#eef3f8');
+    doc.rect(tableLeft, cursorY, tableWidth, headerHeight, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(primary);
+    doc.text('DATE', columns.date, cursorY + 17);
+    doc.text('CONTRIBUTOR', columns.contributor, cursorY + 17);
+    doc.text('PARISH / FORANE', columns.context, cursorY + 17);
+    doc.text('AMOUNT', columns.amount, cursorY + 17, { align: 'right' });
+    cursorY += headerHeight;
+  };
+
+  drawHeader();
+  contributions.forEach((item, index) => {
+    ensurePage(rowHeight + headerHeight);
+    if (cursorY === marginTop) drawHeader();
+
+    if (index % 2 === 1) {
+      doc.setFillColor('#fbfcfe');
+      doc.rect(tableLeft, cursorY, tableWidth, rowHeight, 'F');
+    }
+    doc.setDrawColor('#eef1f5');
+    doc.line(tableLeft, cursorY + rowHeight, tableLeft + tableWidth, cursorY + rowHeight);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(grayDark);
+    doc.text(formatDateOnly(item.date || ''), columns.date, cursorY + 14);
+
+    const contributor = doc.splitTextToSize(clean(item.source_name), 146);
+    doc.text(contributor.slice(0, 2), columns.contributor, cursorY + 12);
+
+    const contextText = [item.parish?.name, item.forane?.name]
+      .map(clean)
+      .filter(v => v !== '-')
+      .join(' / ');
+    const context = doc.splitTextToSize(contextText || '-', contextWidth);
+    doc.text(context.slice(0, 2), columns.context, cursorY + 12);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(item.amount), columns.amount, cursorY + 14, {
+      align: 'right',
+    });
+
+    cursorY += rowHeight;
+  });
+
+  ensurePage(32);
+  doc.setFillColor(green);
+  doc.rect(tableLeft, cursorY, tableWidth, 30, 'F');
+  doc.setTextColor('#ffffff');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('TOTAL', tableLeft + 10, cursorY + 20);
+  doc.text(formatCurrency(summary.total_amount), columns.amount, cursorY + 20, {
+    align: 'right',
+  });
+
+  drawFooter();
+  return doc;
+};
+
+export const generateContributionReportPdf = (
+  report: ContributionReportData,
+  options: ReceiptOptions = {}
+) => {
+  const entity = report.entity || {};
+  const period = report.period || {};
+  const safeName = String(entity.name || entity.type || 'Contribution_Report')
+    .replace(/[^a-z0-9]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+  const name =
+    options.filename ||
+    `${safeName || 'Contribution_Report'}_${period.from_year || 'from'}_${period.to_year || 'to'}.pdf`;
+  saveOrPrintDoc(
+    buildContributionReportPdf(report, options.detailLevel || 'summary'),
+    options,
+    name
+  );
+};
+
 // Existing specific family builder kept for backward compatibility
 export const buildFamilyReceiptPdf = (data: FamilyReceiptData): jsPDF => {
   return buildGenericReceiptPdf({
@@ -374,6 +876,13 @@ export const buildFamilyReceiptPdf = (data: FamilyReceiptData): jsPDF => {
       { label: 'Parish', value: data.parish },
       { label: 'Family Head', value: data.familyHead },
       { label: 'Contact Number', value: data.contactNumber },
+      {
+        label: 'Report Period',
+        value:
+          data.reportPeriod?.from && data.reportPeriod?.to
+            ? `${data.reportPeriod.from} to ${data.reportPeriod.to}`
+            : '-',
+      },
     ],
     totalValue: data.totalAmount,
     generatedAt: data.generatedAt,
@@ -389,18 +898,7 @@ export const generateReceiptPdf = (
   const doc = buildGenericReceiptPdf(payload);
   const name = filename || `Receipt_${payload.id}.pdf`;
   if (mode === 'print') {
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url);
-    if (win) {
-      win.onload = () => {
-        win.focus();
-        win.print();
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-      };
-    } else {
-      doc.save(name);
-    }
+    saveOrPrintDoc(doc, options, name);
   } else {
     doc.save(name);
   }
@@ -412,20 +910,5 @@ export const generateFamilyReceiptPdf = (
 ) => {
   const doc = buildFamilyReceiptPdf(data);
   const name = `Family_Receipt_${data.id}.pdf`;
-  if (options.mode === 'print') {
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url);
-    if (win) {
-      win.onload = () => {
-        win.focus();
-        win.print();
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-      };
-    } else {
-      doc.save(name);
-    }
-  } else {
-    doc.save(options.filename || name);
-  }
+  saveOrPrintDoc(doc, options, name);
 };
