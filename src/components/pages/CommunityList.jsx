@@ -248,6 +248,10 @@ const CommunityList = () => {
               />
             ))}
           </div>
+        ) : loading ? (
+          <div className="flex justify-center py-10">
+            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center py-24">
             {selectedLetter || searchTerm.trim() ? (
@@ -291,11 +295,6 @@ const CommunityList = () => {
             >
               &larr; Back
             </button>
-          </div>
-        )}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
