@@ -38,6 +38,8 @@ export interface ContributionReportData {
     par_vicar_name?: string;
     for_location?: string;
     for_vicar_name?: string;
+    for_name?: string;
+    forane_name?: string;
     address?: string;
     location?: string;
     vicar_name?: string;
@@ -65,8 +67,18 @@ export interface ContributionReportData {
     purpose?: string;
     family?: { code?: string; house_name?: string; head_name?: string };
     community?: { code?: string; name?: string };
-    parish?: { code?: string; name?: string };
-    forane?: { code?: string; name?: string };
+    parish?: {
+      code?: string;
+      name?: string;
+      location?: string;
+      par_location?: string;
+    };
+    forane?: {
+      code?: string;
+      name?: string;
+      location?: string;
+      for_location?: string;
+    };
   }>;
 }
 
@@ -461,18 +473,62 @@ export const buildContributionReportPdf = (
   const line = '#d8dee8';
   const green = '#0f766e';
 
-  const clean = (value: unknown) =>
-    String(value ?? '-')
-      .replace(/\s+/g, ' ')
-      .trim() || '-';
-  const titleCase = (value: unknown) =>
-    clean(value).replace(/\b\w/g, char => char.toUpperCase());
   const period = report.period || {};
   const entity = report.entity || {};
   const summary = report.summary || {};
   const contributions = Array.isArray(report.contributions)
     ? report.contributions
     : [];
+
+  const clean = (value: unknown) =>
+    String(value ?? '-')
+      .replace(/\s+/g, ' ')
+      .trim() || '-';
+  const withLocation = (
+    name: unknown,
+    location: unknown,
+    fallback: unknown = '-'
+  ) => {
+    const cleanName = clean(name);
+    const cleanLocation = clean(location);
+    if (cleanName !== '-' && cleanLocation !== '-') {
+      return `${cleanName}, ${cleanLocation}`;
+    }
+    if (cleanName !== '-') return cleanName;
+    if (cleanLocation !== '-') return cleanLocation;
+    return clean(fallback);
+  };
+  const parishLabel = (item: any) =>
+    withLocation(
+      item.parish?.name,
+      item.parish?.location || item.parish?.par_location,
+      item.source_name
+    );
+  const foraneLabel = (item: any) =>
+    withLocation(
+      item.forane?.name,
+      item.forane?.location || item.forane?.for_location
+    );
+  const contributionContext = (item: any) => {
+    if (clean(entity.type) === 'forane') return parishLabel(item);
+    if (clean(entity.type) === 'parish') return foraneLabel(item);
+    if (clean(entity.type) === 'family') {
+      return [parishLabel(item), foraneLabel(item)]
+        .filter(value => clean(value) !== '-')
+        .join(' / ');
+    }
+    return [parishLabel(item), foraneLabel(item)]
+      .filter(value => clean(value) !== '-')
+      .join(' / ');
+  };
+  const contextHeader =
+    clean(entity.type) === 'forane'
+      ? 'PARISH'
+      : clean(entity.type) === 'parish'
+        ? 'FORANE'
+        : 'PARISH / FORANE';
+  const titleCase = (value: unknown) =>
+    clean(value).replace(/\b\w/g, char => char.toUpperCase());
   const periodText =
     period.from_year && period.to_year
       ? `${period.from_year} - ${period.to_year}`
@@ -495,6 +551,16 @@ export const buildContributionReportPdf = (
     {
       label: 'Contact',
       value: entity.contact_number || entity.phone_number,
+    },
+    {
+      label: 'Forane',
+      value:
+        clean(entity.type) === 'parish'
+          ? withLocation(
+              entity.for_name || entity.forane_name,
+              entity.for_location
+            )
+          : undefined,
     },
     {
       label: 'House Name',
@@ -679,7 +745,7 @@ export const buildContributionReportPdf = (
 
     const primaryGroups =
       clean(entity.type) === 'forane'
-        ? groupContributions(item => item.parish?.name || item.source_name)
+        ? groupContributions(item => parishLabel(item))
         : clean(entity.type) === 'parish'
           ? groupContributions(item => item.community?.name || item.source_name)
           : groupContributions(item => item.source_name);
@@ -791,7 +857,7 @@ export const buildContributionReportPdf = (
     doc.setTextColor(primary);
     doc.text('DATE', columns.date, cursorY + 17);
     doc.text('CONTRIBUTOR', columns.contributor, cursorY + 17);
-    doc.text('PARISH / FORANE', columns.context, cursorY + 17);
+    doc.text(contextHeader, columns.context, cursorY + 17);
     doc.text('AMOUNT', columns.amount, cursorY + 17, { align: 'right' });
     cursorY += headerHeight;
   };
@@ -816,10 +882,7 @@ export const buildContributionReportPdf = (
     const contributor = doc.splitTextToSize(clean(item.source_name), 146);
     doc.text(contributor.slice(0, 2), columns.contributor, cursorY + 12);
 
-    const contextText = [item.parish?.name, item.forane?.name]
-      .map(clean)
-      .filter(v => v !== '-')
-      .join(' / ');
+    const contextText = contributionContext(item);
     const context = doc.splitTextToSize(contextText || '-', contextWidth);
     doc.text(context.slice(0, 2), columns.context, cursorY + 12);
 

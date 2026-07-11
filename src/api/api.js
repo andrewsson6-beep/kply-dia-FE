@@ -3,7 +3,7 @@ import axios from 'axios';
 // Base URL from env; fallback to local dev
 const API_BASE_URL =
   (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
-  'http://localhost:8000';
+  'https://kply-dia-be-1097781738873.us-central1.run.app';
 
 // Token accessor (injected from store setup)
 let getTokens = () => ({ accessToken: null, sessionUuid: null });
