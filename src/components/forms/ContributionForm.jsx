@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 /*
   ContributionForm
@@ -37,6 +37,15 @@ const ContributionForm = ({
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setFormData({
+      amount: initialData.amount ?? '',
+      notes: initialData.notes ?? '',
+      date: initialData.date || todayDate(),
+    });
+    setErrors({});
+  }, [initialData.amount, initialData.notes, initialData.date]);
 
   const handleChange = e => {
     const { name, value } = e.target;

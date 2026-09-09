@@ -6,7 +6,7 @@ import ContributionForm from '../forms/ContributionForm';
 import { domainApi } from '../../api/api.js';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useToast } from '../ui/useToast.js';
-import { generateReceiptPdf } from '../../services/pdfHelper.ts';
+import ContributionReportModal from '../ui/ContributionReportModal';
 import IndividualForm from '../forms/IndividualForm';
 
 const IndividualVisit = () => {
@@ -40,6 +40,7 @@ const IndividualVisit = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null); // contribution row
   const [showEditIndividual, setShowEditIndividual] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const toApiDate = (yyyyMmDd, baseDateTime) => {
     const base = String(baseDateTime || '');
@@ -138,29 +139,6 @@ const IndividualVisit = () => {
     }
   };
 
-  const printSummary = () => {
-    if (!data) return;
-    const payload = {
-      id: data.ind_id,
-      title: data.ind_full_name,
-      subtitleLabel: 'House / Place',
-      subtitleValue: data.ind_address,
-      fields: [
-        { label: 'Phone', value: data.ind_phone_number || '' },
-        { label: 'Email', value: data.ind_email || '' },
-        { label: 'Code', value: data.ind_code || '' },
-        { label: 'Unique No', value: data.ind_unique_no || '' },
-      ],
-      totalValue: data.ind_total_contribution_amount,
-      contributionsTitle: 'Contributions',
-      contributions: (data.contributions || []).map(r => ({
-        date: r.icon_date,
-        amount: r.icon_amount,
-      })),
-    };
-    generateReceiptPdf(payload, { mode: 'print' });
-  };
-
   const rows = useMemo(() => data?.contributions || [], [data]);
 
   const toDMY = raw => {
@@ -198,7 +176,7 @@ const IndividualVisit = () => {
               Add Contribution
             </button>
             <button
-              onClick={printSummary}
+              onClick={() => setShowReport(true)}
               className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
             >
               Print Summary
@@ -348,6 +326,14 @@ const IndividualVisit = () => {
       </Modal>
 
       {/* Edit Individual Drawer */}
+      <ContributionReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        entityType="individual"
+        entityId={individualId}
+        entityName={data?.ind_full_name || 'individual'}
+      />
+
       <Modal
         isOpen={showEditIndividual}
         onClose={() => setShowEditIndividual(false)}

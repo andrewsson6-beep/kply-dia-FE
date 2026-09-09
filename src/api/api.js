@@ -1120,6 +1120,31 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  deleteFamilyContribution: async payload => {
+    try {
+      // payload: { fcon_id }
+      const res = await axiosInstance.post(
+        '/delete-family-contribution',
+        payload
+      );
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(msg || 'Failed to delete family contribution');
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to delete family contribution'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
 };
 
 export { axiosInstance };

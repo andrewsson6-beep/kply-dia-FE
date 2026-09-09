@@ -7,7 +7,7 @@ import FamilyForm from '../forms/FamilyForm';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { domainApi } from '../../api/api.js';
 import { useToast } from '../ui/useToast.js';
-import { generateReceiptPdf } from '../../services/pdfHelper.ts';
+import ContributionReportModal from '../ui/ContributionReportModal';
 
 const FamilyVisit = () => {
   const { familyId, communityId } = useParams();
@@ -21,7 +21,10 @@ const FamilyVisit = () => {
 
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [deletingContribution, setDeletingContribution] = useState(null);
+  const [isDeletingContribution, setIsDeletingContribution] = useState(false);
   const [showEditFamily, setShowEditFamily] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [communityName, setCommunityName] = useState('');
 
   const loadDetails = async () => {
@@ -126,36 +129,23 @@ const FamilyVisit = () => {
     }
   };
 
-  const printSummary = () => {
-    if (!data) return;
-    const sum = (data.contributions || []).reduce((acc, r) => {
-      const n =
-        typeof r.amount === 'number'
-          ? r.amount
-          : Number(String(r.amount).replace(/[^0-9.]/g, '')) || 0;
-      return acc + n;
-    }, 0);
-    const total =
-      data.totalAmountRaw && data.totalAmountRaw > 0
-        ? data.totalAmountRaw
-        : sum;
-    const payload = {
-      id: data.id,
-      title: data.houseName,
-      subtitleLabel: 'Family Head',
-      subtitleValue: data.headName || '',
-      fields: [
-        { label: 'Phone', value: data.phoneNumber || '' },
-        { label: 'Code', value: data.code || '' },
-      ],
-      totalValue: total,
-      contributionsTitle: 'Contributions',
-      contributions: (data.contributions || []).map(r => ({
-        date: r.date,
-        amount: r.amount ?? 0,
-      })),
-    };
-    generateReceiptPdf(payload, { mode: 'print' });
+  const confirmDeleteContribution = async () => {
+    if (!deletingContribution) return;
+    setIsDeletingContribution(true);
+    try {
+      await domainApi.deleteFamilyContribution({
+        fcon_id: deletingContribution.id,
+      });
+      showToast('Contribution deleted successfully', { type: 'success' });
+      setDeletingContribution(null);
+      await loadDetails();
+    } catch (e) {
+      showToast(e.message || 'Failed to delete contribution', {
+        type: 'error',
+      });
+    } finally {
+      setIsDeletingContribution(false);
+    }
   };
 
   return (
@@ -180,7 +170,7 @@ const FamilyVisit = () => {
               Add Contribution
             </button>
             <button
-              onClick={printSummary}
+              onClick={() => setShowReport(true)}
               className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
             >
               Print Summary
@@ -249,12 +239,20 @@ const FamilyVisit = () => {
                         <td className="py-2 pr-4">{formatINR(r.amount)}</td>
                         <td className="py-2 pr-4">{r.purpose || '-'}</td>
                         <td className="py-2 pr-4">
-                          <button
-                            className="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
-                            onClick={() => setEditing(r)}
-                          >
-                            Edit
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              className="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs"
+                              onClick={() => setEditing(r)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                              onClick={() => setDeletingContribution(r)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -304,9 +302,9 @@ const FamilyVisit = () => {
           <ContributionForm
             isEdit
             initialData={{
-              amount: editing.fcon_amount,
-              notes: editing.fcon_purpose,
-              date: toInputDate(editing.fcon_date),
+              amount: editing.amount,
+              notes: editing.purpose,
+              date: toInputDate(editing.date),
             }}
             onSubmit={onEditSubmit}
             onCancel={() => setEditing(null)}
@@ -314,7 +312,48 @@ const FamilyVisit = () => {
         )}
       </Modal>
 
+      {/* Delete Contribution Confirmation Modal */}
+      <Modal
+        isOpen={!!deletingContribution}
+        onClose={() => !isDeletingContribution && setDeletingContribution(null)}
+        title="Confirm Delete"
+        size="sm"
+        variant="center"
+        closeOnBackdrop={!isDeletingContribution}
+      >
+        <p className="text-sm text-gray-700 mb-4">
+          Are you sure you want to delete this contribution? This action cannot
+          be undone.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            type="button"
+            onClick={() => setDeletingContribution(null)}
+            disabled={isDeletingContribution}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmDeleteContribution}
+            disabled={isDeletingContribution}
+            className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm"
+          >
+            {isDeletingContribution ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </Modal>
+
       {/* Edit Family Drawer */}
+      <ContributionReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        entityType="family"
+        entityId={familyId}
+        entityName={data?.houseName || 'family'}
+      />
+
       <Modal
         isOpen={showEditFamily}
         onClose={() => setShowEditFamily(false)}
