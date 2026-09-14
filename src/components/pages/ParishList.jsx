@@ -6,10 +6,12 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const ParishList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedYear, setSelectedYear } = useYearFilter();
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
@@ -18,8 +20,8 @@ const ParishList = () => {
 
   // Always fetch fresh parish data on every visit
   useEffect(() => {
-    dispatch(fetchParishesThunk());
-  }, [dispatch]);
+    dispatch(fetchParishesThunk(selectedYear || undefined));
+  }, [dispatch, selectedYear]);
 
   // Always fetch forane options for mapping names
   useEffect(() => {
@@ -87,6 +89,10 @@ const ParishList = () => {
         }}
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        yearLoading={loading}
       />
 
       {error && (

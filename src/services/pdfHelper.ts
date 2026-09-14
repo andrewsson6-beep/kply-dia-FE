@@ -456,9 +456,10 @@ export const buildGenericReceiptPdf = (
 
 export const buildContributionReportPdf = (
   report: ContributionReportData,
-  detailLevel: 'summary' | 'detail' = 'summary'
+  detailLevel: 'summary' | 'detail' = 'summary',
+  existingDoc?: jsPDF
 ): jsPDF => {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const doc = existingDoc || new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const marginX = 48;
@@ -923,6 +924,265 @@ export const generateContributionReportPdf = (
     `${safeName || 'Contribution_Report'}_${period.from_year || 'from'}_${period.to_year || 'to'}.pdf`;
   saveOrPrintDoc(
     buildContributionReportPdf(report, options.detailLevel || 'summary'),
+    options,
+    name
+  );
+};
+
+const getCommunityFamilyReports = (response: any): any[] => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.report_data)) return response.report_data;
+  if (Array.isArray(response?.reports)) return response.reports;
+  if (Array.isArray(response?.family_reports)) return response.family_reports;
+  if (Array.isArray(response?.families)) return response.families;
+  if (Array.isArray(response?.data)) return response.data;
+  return [];
+};
+
+const normalizeCommunityFamilyReport = (
+  item: any,
+  period: any,
+  metadata: any
+): ContributionReportData => {
+  const source = item?.report || item;
+  const family = source?.entity || source?.family || source?.family_details || {};
+  const familyName =
+    family.name ||
+    family.house_name ||
+    source?.house_name ||
+    source?.family_name ||
+    source?.name;
+  const contributions =
+    source?.contributions || source?.contribution_reports || source?.data || [];
+  const summary = source?.summary || {
+    total_amount:
+      source?.total_amount ??
+      source?.total_contribution_amount ??
+      source?.family_total_contribution_amount ??
+      0,
+    total_count: source?.total_count ?? contributions.length,
+  };
+
+  return {
+    period: source?.period || period,
+    entity: {
+      ...family,
+      type: 'family',
+      id: family.id || family.family_id || source?.family_id,
+      name: familyName,
+      house_name: family.house_name || source?.house_name,
+      head_name: family.head_name || family.family_head || source?.head_name,
+      code: family.code || family.family_code || source?.family_code,
+      phone_number: family.phone_number || source?.phone_number,
+      community: family.community || source?.community || metadata?.community_details,
+      par_location: metadata?.parish,
+      for_location: metadata?.forane,
+    },
+    summary,
+    contributions: Array.isArray(contributions)
+      ? contributions.map(contribution => ({
+          ...contribution,
+          source_name: contribution.source_name || familyName,
+        }))
+      : [],
+  };
+};
+
+const buildCommunityFamilyReportPage = (
+  report: ContributionReportData,
+  existingDoc: jsPDF
+) => {
+  const doc = existingDoc;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const top = 52;
+  const contentWidth = pageWidth - marginX * 2;
+  const primary = '#1f4e79';
+  const dark = '#111827';
+  const gray = '#6b7280';
+  const line = '#d8dee8';
+  const lightBlue = '#eef3f8';
+  const totalGreen = '#0f766e';
+  const clean = (value: unknown) =>
+    String(value ?? '-').replace(/\s+/g, ' ').trim() || '-';
+  const entity = report.entity || {};
+  const period = report.period || {};
+  const contributions = Array.isArray(report.contributions)
+    ? report.contributions
+    : [];
+  const periodText = `${period.from_year || '-'} - ${period.to_year || '-'}`;
+  const familyTitle =
+    [entity.head_name, entity.house_name]
+      .map(clean)
+      .filter(value => value !== '-')
+      .join(', ') || clean(entity.name);
+  const total = report.summary?.total_amount || 0;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(primary);
+  doc.text('ARDRAM', marginX, top - 8);
+  doc.setFontSize(18);
+  doc.setTextColor(dark);
+  doc.text('Donation Contribution Report', marginX, top + 16);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(primary);
+  doc.text('CONTRIBUTIONS OVER YEARS', pageWidth - marginX, top - 8, {
+    align: 'right',
+  });
+  doc.setFontSize(14);
+  doc.setTextColor(dark);
+  doc.text(periodText, pageWidth - marginX, top + 16, { align: 'right' });
+  doc.setDrawColor(primary);
+  doc.setLineWidth(1.5);
+  doc.line(marginX, top + 28, pageWidth - marginX, top + 28);
+
+  let cursorY = top + 62;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(dark);
+  doc.text(familyTitle, marginX, cursorY);
+  cursorY += 28;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(gray);
+  doc.text(`${clean(entity.name)}${entity.code ? ` | ${entity.code}` : ''}`, marginX, cursorY);
+  cursorY += 20;
+
+  const detailItems = [
+    ['Family Head', entity.head_name],
+    ['House Name', entity.house_name],
+    ['Parish', entity.par_location],
+    ['Community', entity.community?.name || entity.community],
+    ['Contact Number', entity.phone_number || entity.contact_number],
+    ['Forane', entity.for_location],
+  ].filter(([, value]) => clean(value) !== '-');
+  const detailRowHeight = 38;
+  const detailHeight = Math.ceil(detailItems.length / 2) * detailRowHeight;
+  doc.setFillColor('#f6f8fb');
+  doc.roundedRect(marginX, cursorY, contentWidth, detailHeight, 4, 4, 'F');
+  doc.setDrawColor(line);
+  doc.roundedRect(marginX, cursorY, contentWidth, detailHeight, 4, 4, 'S');
+  detailItems.forEach(([label, value], index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const x = marginX + 14 + column * (contentWidth / 2);
+    const y = cursorY + row * detailRowHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(gray);
+    doc.text(label.toUpperCase(), x, y + 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(dark);
+    doc.text(doc.splitTextToSize(clean(value), contentWidth / 2 - 28)[0], x, y + 29);
+  });
+  cursorY += detailHeight + 24;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(dark);
+  doc.text('Contribution Details', marginX, cursorY);
+  cursorY += 12;
+  const tableTop = cursorY;
+  const dateX = marginX + 12;
+  const amountX = pageWidth - marginX - 12;
+  doc.setFillColor(lightBlue);
+  doc.rect(marginX, tableTop, contentWidth, 28, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(primary);
+  doc.text('DATE', dateX, tableTop + 18);
+  doc.text('AMOUNT', amountX, tableTop + 18, { align: 'right' });
+  cursorY = tableTop + 28;
+  contributions.forEach((contribution, index) => {
+    const rowHeight = 28;
+    if (index % 2 === 1) {
+      doc.setFillColor('#fbfcfe');
+      doc.rect(marginX, cursorY, contentWidth, rowHeight, 'F');
+    }
+    doc.setDrawColor('#eef1f5');
+    doc.line(marginX, cursorY + rowHeight, pageWidth - marginX, cursorY + rowHeight);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(dark);
+    doc.text(formatDateOnly(contribution.date || ''), dateX, cursorY + 18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(contribution.amount), amountX, cursorY + 18, {
+      align: 'right',
+    });
+    cursorY += rowHeight;
+  });
+  if (!contributions.length) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(gray);
+    doc.text('No contributions found for the selected period.', dateX, cursorY + 18);
+    cursorY += 28;
+  }
+
+  cursorY += 24;
+  doc.setFillColor(totalGreen);
+  doc.roundedRect(marginX, cursorY, contentWidth, 52, 5, 5, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor('#ffffff');
+  doc.text('TOTAL CONTRIBUTION', marginX + 16, cursorY + 31);
+  doc.setFontSize(15);
+  doc.text(formatCurrency(total), pageWidth - marginX - 16, cursorY + 31, {
+    align: 'right',
+  });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(gray);
+  doc.text('Generated contribution report', marginX, pageHeight - 28);
+};
+
+export const buildCommunityContributionReportsPdf = (
+  response: any
+): jsPDF => {
+  const payload = response?.data || response;
+  const reports = getCommunityFamilyReports(payload);
+  const period = payload?.period || {};
+  const metadata = payload?.metadata || {};
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+  if (!reports.length) {
+    buildCommunityFamilyReportPage(
+      {
+        period,
+        entity: { type: 'community', name: 'Community Contributions' },
+        summary: { total_amount: 0 },
+        contributions: [],
+      },
+      doc
+    );
+    return doc;
+  }
+
+  reports.forEach((item, index) => {
+    if (index > 0) doc.addPage();
+    buildCommunityFamilyReportPage(
+      normalizeCommunityFamilyReport(item, period, metadata),
+      doc
+    );
+  });
+
+  return doc;
+};
+
+export const generateCommunityContributionReportsPdf = (
+  response: any,
+  options: ReceiptOptions = {}
+) => {
+  const payload = response?.data || response;
+  const period = payload?.period || {};
+  const name =
+    options.filename ||
+    `Community_Contribution_Reports_${period.from_year || 'from'}_${period.to_year || 'to'}.pdf`;
+  saveOrPrintDoc(
+    buildCommunityContributionReportsPdf(response),
     options,
     name
   );

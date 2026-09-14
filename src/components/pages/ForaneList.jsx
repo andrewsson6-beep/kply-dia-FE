@@ -5,10 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedYear, setSelectedYear } = useYearFilter();
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
@@ -16,8 +18,8 @@ const ForaneList = () => {
 
   // Always fetch fresh forane data on every visit
   useEffect(() => {
-    dispatch(fetchForanesThunk());
-  }, [dispatch]);
+    dispatch(fetchForanesThunk(selectedYear || undefined));
+  }, [dispatch, selectedYear]);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -69,6 +71,10 @@ const ForaneList = () => {
         }}
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        yearLoading={loading}
       />
 
       <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">

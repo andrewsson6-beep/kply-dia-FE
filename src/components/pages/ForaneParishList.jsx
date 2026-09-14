@@ -6,6 +6,7 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesByForaneThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const ForaneParishList = () => {
   const { foraneId } = useParams();
@@ -16,6 +17,7 @@ const ForaneParishList = () => {
 
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedYear, setSelectedYear } = useYearFilter();
 
   const foraneState = useAppSelector(state => state.forane);
   const parishForaneState = useAppSelector(
@@ -38,9 +40,9 @@ const ForaneParishList = () => {
   useEffect(() => {
     const fid = Number(foraneId);
     if (fid) {
-      dispatch(fetchParishesByForaneThunk(fid));
+      dispatch(fetchParishesByForaneThunk({ foraneId: fid, year: selectedYear || undefined }));
     }
-  }, [foraneId, dispatch]);
+  }, [foraneId, selectedYear, dispatch]);
 
   const foraneNameById = useMemo(() => {
     const map = new Map();
@@ -111,6 +113,10 @@ const ForaneParishList = () => {
         }}
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        yearLoading={loading}
       />
 
       <div className="max-w-7xl mx-auto">

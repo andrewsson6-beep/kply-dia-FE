@@ -19,6 +19,7 @@ import parishReducer from './slices/parishSlice.js';
 import communityReducer from './slices/communitySlice.js';
 import familyReducer from './slices/familySlice.js';
 import individualReducer from './slices/individualSlice.js';
+import yearFilterReducer from './slices/yearFilterSlice.js';
 import { setTokenAccessor, setUnauthorizedHandler } from '../api/api.js';
 import { clearAuth } from './slices/authSlice.js';
 
@@ -36,6 +37,12 @@ const authPersistConfig = {
   ],
 };
 
+const yearFilterPersistConfig = {
+  key: 'yearFilter',
+  storage,
+  whitelist: ['selectedYear'],
+};
+
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   forane: foraneReducer,
@@ -43,6 +50,7 @@ const rootReducer = combineReducers({
   community: communityReducer,
   family: familyReducer,
   individual: individualReducer,
+  yearFilter: persistReducer(yearFilterPersistConfig, yearFilterReducer),
 });
 
 // Configure store

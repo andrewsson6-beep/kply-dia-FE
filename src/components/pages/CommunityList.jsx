@@ -11,10 +11,12 @@ import {
   fetchCommunitiesThunk,
 } from '../../store/actions/communityActions.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedYear, setSelectedYear } = useYearFilter();
   const headerOffset = useHeaderOffset();
 
   const navigate = useNavigate();
@@ -78,11 +80,13 @@ const CommunityList = () => {
   useEffect(() => {
     if (
       parentId &&
-      !communityState.loaded &&
-      !loading &&
-      !communityState.error
+      !loading
     ) {
-      dispatch(fetchCommunitiesThunk({ parentType, parentId }));
+      dispatch(fetchCommunitiesThunk({
+        parentType,
+        parentId,
+        year: selectedYear || undefined,
+      }));
     }
   }, [
     parentId,
@@ -90,6 +94,7 @@ const CommunityList = () => {
     communityState.loaded,
     communityState.error,
     loading,
+    selectedYear,
     dispatch,
   ]);
 
@@ -137,7 +142,7 @@ const CommunityList = () => {
 
   return (
     <div
-      className="bg-gray-100 min-h-full p-4"
+      className="min-h-full bg-slate-50 p-4 sm:p-6"
       style={{ paddingTop: headerOffset }}
     >
       <Header
@@ -155,37 +160,70 @@ const CommunityList = () => {
         }}
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        yearLoading={loading}
       />
 
-      {/* Removed hard-coded mt-20; header offset handled by container padding */}
-      <div className="max-w-7xl mx-auto">
-        {/* Top bar with back + add button when list non-empty or when there are items but filters are applied */}
-        {(filtered.length > 0 ||
-          (items.length > 0 && (selectedLetter || searchTerm.trim()))) && (
-          <div className="flex items-center justify-between mb-4">
+      <main className="mx-auto max-w-[1440px]">
+        <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
             <button
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer text-sm"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
               onClick={handleBack}
             >
-              &larr; Back
+              <span aria-hidden="true">&larr;</span> Back
             </button>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-            >
-              + Add Community
-            </button>
+            <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                Community directory
+              </p>
+              <p className="mt-0.5 text-sm font-medium text-slate-700">
+                {filtered.length} of {items.length} communities shown
+              </p>
+            </div>
           </div>
-        )}
+          <button
+            onClick={() => setShowAdd(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            <span className="text-lg leading-none" aria-hidden="true">+</span>
+            Add community
+          </button>
+        </div>
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
+              Communities
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Select a community to view its details or manage families.
+            </p>
+          </div>
+          {(selectedLetter || searchTerm.trim()) && (
+            <button
+              onClick={() => {
+                setSelectedLetter(null);
+                setSearchTerm('');
+              }}
+              className="rounded-lg px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
         {error && (
-          <div className="mb-4 text-sm bg-red-50 border border-red-200 px-3 py-2 rounded flex items-center justify-between gap-3">
-            <span className="text-red-600">{error}</span>
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm">
+            <span className="text-red-700">{error}</span>
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() =>
                   dispatch(fetchCommunitiesThunk({ parentType, parentId }))
                 }
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
               >
                 Retry
               </button>
@@ -194,50 +232,21 @@ const CommunityList = () => {
         )}
 
         {(selectedLetter || searchTerm.trim()) && (
-          <div className="mb-4 flex flex-wrap gap-2 text-sm">
+          <div className="mb-5 flex flex-wrap items-center gap-2 text-xs">
             {selectedLetter && (
-              <div className="text-gray-600">
-                Filtering by letter:{' '}
-                <span className="font-semibold text-blue-600">
-                  {selectedLetter}
-                </span>
-                <button
-                  onClick={() => setSelectedLetter(null)}
-                  className="ml-2 text-blue-500 hover:underline"
-                >
-                  Clear
-                </button>
+              <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 font-medium text-blue-700">
+                Letter: <span className="font-bold">{selectedLetter}</span>
               </div>
             )}
             {searchTerm.trim() && (
-              <div className="text-gray-600">
-                Searching for:{' '}
-                <span className="font-semibold text-green-600">
-                  "{searchTerm.trim()}"
-                </span>
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="ml-2 text-green-500 hover:underline"
-                >
-                  Clear
-                </button>
+              <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-medium text-emerald-700">
+                Search: <span className="font-bold">{searchTerm.trim()}</span>
               </div>
-            )}
-            {(selectedLetter || searchTerm.trim()) && (
-              <button
-                onClick={() => {
-                  setSelectedLetter(null);
-                  setSearchTerm('');
-                }}
-                className="text-red-500 hover:underline font-medium"
-              >
-                Clear All Filters
-              </button>
             )}
           </div>
         )}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map(c => (
               <CommunityCard
                 key={c.id}
@@ -253,7 +262,7 @@ const CommunityList = () => {
             <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center py-24">
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center shadow-sm">
             {selectedLetter || searchTerm.trim() ? (
               <div>
                 <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
@@ -264,14 +273,14 @@ const CommunityList = () => {
                     setSelectedLetter(null);
                     setSearchTerm('');
                   }}
-                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm mb-4"
+                  className="mb-4 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
                 >
                   Clear All Filters
                 </button>
                 <br />
                 <button
                   onClick={() => setShowAdd(true)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                 >
                   + Add Community
                 </button>
@@ -283,7 +292,7 @@ const CommunityList = () => {
                 </p>
                 <button
                   onClick={() => setShowAdd(true)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                 >
                   + Add Community
                 </button>
@@ -297,7 +306,7 @@ const CommunityList = () => {
             </button>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Add Community Side Drawer */}
       <Modal

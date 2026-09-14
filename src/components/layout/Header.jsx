@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 // Import SVG logo (was incorrectly pointing to a non-existent PNG and using named import)
 import mmtlogo from '../../assets/images/mmtlogo.svg';
+import YearPicker from '../ui/YearPicker';
 
 const Header = ({
   onSelect,
@@ -9,6 +10,10 @@ const Header = ({
   headerInfo,
   searchValue,
   onSearchChange,
+  selectedYear,
+  onYearChange,
+  showYearPicker = false,
+  yearLoading = false,
 }) => {
   const [showAlphabet, setShowAlphabet] = useState(false);
   const [uncontrolledLetter, setUncontrolledLetter] = useState(null);
@@ -142,6 +147,13 @@ const Header = ({
                 )}
               </button>
             </div>
+          )}
+          {showYearPicker && (
+            <YearPicker
+              selectedYear={selectedYear}
+              onChange={onYearChange}
+              loading={yearLoading}
+            />
           )}
           <div className="relative w-40 sm:w-56 md:w-64 border border-blue-400 rounded-md">
             <input

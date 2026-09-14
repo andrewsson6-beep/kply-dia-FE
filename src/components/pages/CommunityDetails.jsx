@@ -7,7 +7,10 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { domainApi } from '../../api/api.js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { updateCommunityThunk } from '../../store/actions/communityActions.js';
-import { generateContributionReportPdf } from '../../services/pdfHelper';
+import {
+  generateCommunityContributionReportsPdf,
+  generateContributionReportPdf,
+} from '../../services/pdfHelper';
 import { FaFilePdf } from 'react-icons/fa6';
 
 // Community Details page (skeleton similar to Individual/Institution visit pages)
@@ -25,6 +28,7 @@ const CommunityDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportMode, setReportMode] = useState('families');
   const [reportPeriod, setReportPeriod] = useState({ from: '', to: '' });
   const [reportDetailLevel, setReportDetailLevel] = useState('summary');
   const [reportLoading, setReportLoading] = useState(false);
@@ -64,10 +68,11 @@ const CommunityDetails = () => {
     setError('');
   };
 
-  const openReportModal = () => {
+  const openReportModal = mode => {
     setReportPeriod({ from: '', to: '' });
     setReportDetailLevel('summary');
     setReportError('');
+    setReportMode(mode);
     setReportModalOpen(true);
   };
 
@@ -78,16 +83,28 @@ const CommunityDetails = () => {
     setReportLoading(true);
     setReportError('');
     try {
-      const report = await domainApi.fetchContributionReport({
-        entity_type: 'community',
-        entity_id: Number(communityId),
-        from_year: Number(reportPeriod.from),
-        to_year: Number(reportPeriod.to),
-      });
-      generateContributionReportPdf(report, {
-        mode,
-        detailLevel: reportDetailLevel,
-      });
+      if (reportMode === 'families') {
+        const reports = await domainApi.fetchCommunityContributionReports({
+          community_id: Number(communityId),
+          from_year: Number(reportPeriod.from),
+          to_year: Number(reportPeriod.to),
+        });
+        generateCommunityContributionReportsPdf(reports, {
+          mode,
+          detailLevel: reportDetailLevel,
+        });
+      } else {
+        const report = await domainApi.fetchContributionReport({
+          entity_type: 'community',
+          entity_id: Number(communityId),
+          from_year: Number(reportPeriod.from),
+          to_year: Number(reportPeriod.to),
+        });
+        generateContributionReportPdf(report, {
+          mode,
+          detailLevel: reportDetailLevel,
+        });
+      }
       closeReportModal();
     } catch (reportErr) {
       setReportError(reportErr.message || 'Failed to generate report');
@@ -142,23 +159,29 @@ const CommunityDetails = () => {
         headerInfo={{ title: 'Community Details', subtitle: 'Overview' }}
       />
       <div className="p-4 md:p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+            className="w-fit rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100"
           >
             &larr; Back
           </button>
-          <div className="flex gap-2">
-
-                        <button
+          <div className="flex flex-wrap items-center gap-2">
+            <button
               type="button"
-              onClick={openReportModal}
-              className="h-10 w-11 mr-2 shrink-0 bg-red-600 hover:bg-red-700 text-white rounded shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
-              aria-label="Export PDF report"
-              title="Export PDF report"
+              onClick={() => openReportModal('families')}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
             >
               <FaFilePdf className="h-5 w-5" aria-hidden="true" />
+              Download family reports
+            </button>
+            <button
+              type="button"
+              onClick={() => openReportModal('community')}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400"
+            >
+              <FaFilePdf className="h-5 w-5" aria-hidden="true" />
+              Community report
             </button>
             <button
               onClick={() =>
@@ -166,30 +189,21 @@ const CommunityDetails = () => {
                   `/parish/list/${parishId}/community/${communityId}/visit`
                 )
               }
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               View Families
             </button>
 
-            {/* Placeholder actions mirroring other detail pages */}
             <button
               onClick={handleEditClick}
               disabled={isEditing}
-              className={`px-3 py-2 rounded text-sm ${
+              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
                 isEditing
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   : 'bg-yellow-600 hover:bg-yellow-700 text-white'
               }`}
             >
               {isEditing ? 'Editing...' : 'Edit Community'}
-            </button>
-            <button
-              onClick={() => {
-                /* future: delete community */
-              }}
-              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
-            >
-              Delete Community
             </button>
           </div>
         </div>
@@ -255,10 +269,6 @@ const CommunityDetails = () => {
               </div>
             )}
 
-            {/* Future: contributions/summary per community */}
-            <div className="text-sm text-gray-500">
-              More community actions and details coming soon.
-            </div>
           </div>
         ) : null}
       </div>
@@ -266,7 +276,11 @@ const CommunityDetails = () => {
         <Modal
           isOpen={reportModalOpen}
           onClose={closeReportModal}
-          title="Export PDF Report"
+          title={
+            reportMode === 'families'
+              ? 'Export Family Contribution Reports'
+              : 'Export Community Contribution Report'
+          }
           size="sm"
           footer={
             <div className="w-full flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -337,39 +351,33 @@ const CommunityDetails = () => {
                 />
               </label>
             </div>
-            <div>
-              <span className="text-xs font-semibold text-gray-600">
-                Report Type
-              </span>
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label className="flex items-start gap-2 rounded-md border border-gray-300 px-3 py-2 cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name={`community-report-type-${communityId}`}
-                    value="summary"
-                    checked={reportDetailLevel === 'summary'}
-                    onChange={() => setReportDetailLevel('summary')}
-                    className="mt-1"
-                  />
-                  <span className="block text-sm font-semibold text-gray-800">
-                    Summarized
-                  </span>
-                </label>
-                <label className="flex items-start gap-2 rounded-md border border-gray-300 px-3 py-2 cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name={`community-report-type-${communityId}`}
-                    value="detail"
-                    checked={reportDetailLevel === 'detail'}
-                    onChange={() => setReportDetailLevel('detail')}
-                    className="mt-1"
-                  />
-                  <span className="block text-sm font-semibold text-gray-800">
-                    Detailed
-                  </span>
-                </label>
+            {reportMode === 'community' && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600">
+                  Report Type
+                </span>
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {['summary', 'detail'].map(level => (
+                    <label
+                      key={level}
+                      className="flex items-start gap-2 rounded-md border border-gray-300 px-3 py-2 cursor-pointer hover:bg-gray-50"
+                    >
+                      <input
+                        type="radio"
+                        name={`community-report-type-${communityId}`}
+                        value={level}
+                        checked={reportDetailLevel === level}
+                        onChange={() => setReportDetailLevel(level)}
+                        className="mt-1"
+                      />
+                      <span className="block text-sm font-semibold text-gray-800">
+                        {level === 'summary' ? 'Summarized' : 'Detailed'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             {!periodReady && (
               <p className="text-xs text-gray-500">
                 Choose a valid year range to enable export actions.

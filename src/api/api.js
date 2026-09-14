@@ -218,9 +218,11 @@ const formatINR = val => {
 };
 
 export const domainApi = {
-  fetchForanes: async () => {
+  fetchForanes: async year => {
     try {
-      const res = await axiosInstance.get('/forane-list');
+      const res = await axiosInstance.get('/forane-list', {
+        ...(year ? { params: { year } } : {}),
+      });
       const { code, data, msg } = res.data || {};
       if (code !== 200) {
         throw new Error(msg || 'Failed to load foranes');
@@ -274,6 +276,27 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
+  fetchCommunityContributionReports: async params => {
+    try {
+      const res = await axiosInstance.get('/contribution-reports', { params });
+      const { code, data, msg } = res.data || {};
+      if (code !== 200 || !data) {
+        throw new Error(msg || 'Failed to generate community contribution reports');
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) ||
+            msg ||
+            'Failed to generate community contribution reports'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
   addForane: async payload => {
     try {
       const res = await axiosInstance.post('/add-new-forane', payload);
@@ -295,9 +318,11 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchParishes: async () => {
+  fetchParishes: async year => {
     try {
-      const res = await axiosInstance.get('/all-parish-list');
+      const res = await axiosInstance.get('/all-parish-list', {
+        ...(year ? { params: { year } } : {}),
+      });
       const { code, data, msg } = res.data || {};
       if (code !== 200 || !Array.isArray(data)) {
         throw new Error(msg || 'Failed to load parishes');
@@ -325,11 +350,11 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchParishesByForane: async forane_id => {
+  fetchParishesByForane: async (forane_id, year) => {
     try {
       const res = await axiosInstance.post('/all_forane_parishes', {
         forane_id,
-      });
+      }, year ? { params: { year } } : undefined);
       const { code, data, msg } = res.data || {};
       if (code !== 200) {
         throw new Error(msg || 'Failed to load parishes for forane');
@@ -798,9 +823,13 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchCommunityDetails: async com_id => {
+  fetchCommunityDetails: async (com_id, year) => {
     try {
-      const res = await axiosInstance.post('/community-details', { com_id });
+      const res = await axiosInstance.post(
+        '/community-details',
+        { com_id },
+        year ? { params: { year } } : undefined
+      );
       const { code, data, msg } = res.data || {};
       if (code !== 200 || !data) {
         throw new Error(msg || 'Failed to load community');
@@ -829,7 +858,7 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchCommunities: async (parentType, parentId) => {
+  fetchCommunities: async (parentType, parentId, year) => {
     // Currently supported only for parish context
     console.log('parentType, parentid', parentType, parentId);
     if (parentType !== 'parish') {
@@ -838,7 +867,7 @@ export const domainApi = {
     try {
       const res = await axiosInstance.post('/community-list', {
         parish_id: parentId,
-      });
+      }, year ? { params: { year } } : undefined);
       const { code, data, msg } = res.data || {};
       if (code !== 200 || !Array.isArray(data)) {
         throw new Error(msg || 'Failed to load communities');

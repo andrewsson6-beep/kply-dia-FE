@@ -3,9 +3,9 @@ import { domainApi } from '../../api/api.js';
 
 export const fetchParishesThunk = createAsyncThunk(
   'parish/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (year, { rejectWithValue }) => {
     try {
-      return await domainApi.fetchParishes();
+      return await domainApi.fetchParishes(year);
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to load parishes');
     }
@@ -25,11 +25,11 @@ export const addParishThunk = createAsyncThunk(
 
 export const fetchParishesByForaneThunk = createAsyncThunk(
   'parish/fetchByForane',
-  async (foraneId, { rejectWithValue }) => {
+  async ({ foraneId, year }, { rejectWithValue }) => {
     try {
       return {
         foraneId,
-        items: await domainApi.fetchParishesByForane(foraneId),
+        items: await domainApi.fetchParishesByForane(foraneId, year),
       };
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to load forane parishes');

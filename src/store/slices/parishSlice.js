@@ -36,7 +36,7 @@ const parishSlice = createSlice({
       })
       // Per-forane parishes
       .addCase(fetchParishesByForaneThunk.pending, (state, action) => {
-        const foraneId = action.meta.arg;
+        const { foraneId } = action.meta.arg;
         state.byForane[foraneId] = state.byForane[foraneId] || {
           items: [],
           loading: false,
@@ -56,7 +56,7 @@ const parishSlice = createSlice({
         };
       })
       .addCase(fetchParishesByForaneThunk.rejected, (state, action) => {
-        const foraneId = action.meta.arg;
+        const { foraneId } = action.meta.arg;
         state.byForane[foraneId] = state.byForane[foraneId] || {
           items: [],
           loading: false,

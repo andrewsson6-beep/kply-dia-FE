@@ -14,10 +14,12 @@ import {
   deleteFamilyThunk,
   updateFamilyThunk,
 } from '../../store/actions/familyActions.js';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedYear, setSelectedYear } = useYearFilter();
   const headerOffset = useHeaderOffset();
 
   const dispatch = useAppDispatch();
@@ -97,17 +99,17 @@ function FamilyList() {
   const submitAdd = data => {
     dispatch(addFamilyThunk({ communityId: cid, data })).finally(() => {
       // Refresh from backend so the newly created family appears
-      reloadFromCommunityDetails();
+      reloadFromCommunityDetails(selectedYear || undefined);
     });
     setShowAdd(false);
   };
 
   const formatINR = n => `Rs. ${Number(n || 0).toLocaleString('en-IN')}`;
-  const reloadFromCommunityDetails = async () => {
+  const reloadFromCommunityDetails = async year => {
     setLoading(true);
     setError('');
     try {
-      const details = await domainApi.fetchCommunityDetails(cid);
+      const details = await domainApi.fetchCommunityDetails(cid, year);
       setCommunityName(details?.name || `Community #${cid}`);
       const fams = Array.isArray(details?.families) ? details.families : [];
       const mapped = fams.map(row => ({
@@ -128,9 +130,9 @@ function FamilyList() {
 
   // Initial load from community-details (families + name)
   useEffect(() => {
-    reloadFromCommunityDetails();
+    reloadFromCommunityDetails(selectedYear || undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cid]);
+  }, [cid, selectedYear]);
 
   const filteredFamilies = useMemo(() => {
     let result = families;
@@ -176,6 +178,10 @@ function FamilyList() {
         }}
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        yearLoading={loading}
       />
 
       {/* Header offset handled by parent padding; remove mt-16 */}

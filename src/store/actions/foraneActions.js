@@ -3,9 +3,9 @@ import { domainApi } from '../../api/api.js';
 
 export const fetchForanesThunk = createAsyncThunk(
   'forane/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (year, { rejectWithValue }) => {
     try {
-      return await domainApi.fetchForanes(); // returns { items, options }
+      return await domainApi.fetchForanes(year); // returns { items, options }
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to load foranes');
     }
