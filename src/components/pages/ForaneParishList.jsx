@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesByForaneThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 const ForaneParishList = () => {
   const { foraneId } = useParams();
@@ -26,10 +27,11 @@ const ForaneParishList = () => {
         items: [],
         loading: false,
         error: null,
+        emptyMessage: null,
         loaded: false,
       }
   );
-  const { items, loading, error } = parishForaneState;
+  const { items, loading, error, emptyMessage } = parishForaneState;
 
   // Always fetch fresh forane data on every visit
   useEffect(() => {
@@ -186,7 +188,7 @@ const ForaneParishList = () => {
         )}
 
         <div className="space-y-6">
-          {filteredItems.map((c, index) => (
+          {loading ? <CardListLoader count={4} /> : filteredItems.map((c, index) => (
             <ChurchCard
               key={c.id}
               id={index + 1}
@@ -204,15 +206,29 @@ const ForaneParishList = () => {
               visitLabel="VISIT PARISH"
             />
           ))}
-
-          {loading && (
-            <div className="flex justify-center py-10">
-              <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
           {!loading && filteredItems.length === 0 && (
-            <div className="text-center text-gray-500 py-10">
-              {selectedLetter || searchTerm.trim() ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
+              {emptyMessage ? (
+                <div>
+                  <p className="mb-6 text-sm text-gray-500 sm:text-base">
+                    {emptyMessage}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <button
+                      onClick={() => setSelectedYear(null)}
+                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      View all years
+                    </button>
+                    <button
+                      onClick={() => navigate('/parish/add')}
+                      className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      + Add Parish
+                    </button>
+                  </div>
+                </div>
+              ) : selectedLetter || searchTerm.trim() ? (
                 <div>
                   <p>No parishes match your current filters.</p>
                   <button
@@ -226,7 +242,23 @@ const ForaneParishList = () => {
                   </button>
                 </div>
               ) : (
-                'No parishes present for this Forane.'
+                <div>
+                  <p className="mb-6">No parishes present for this Forane.</p>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <button
+                      onClick={() => setSelectedYear(null)}
+                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      View all years
+                    </button>
+                    <button
+                      onClick={() => navigate('/parish/add')}
+                      className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      + Add Parish
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           )}

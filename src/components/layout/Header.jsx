@@ -13,7 +13,6 @@ const Header = ({
   selectedYear,
   onYearChange,
   showYearPicker = false,
-  yearLoading = false,
 }) => {
   const [showAlphabet, setShowAlphabet] = useState(false);
   const [uncontrolledLetter, setUncontrolledLetter] = useState(null);
@@ -152,7 +151,6 @@ const Header = ({
             <YearPicker
               selectedYear={selectedYear}
               onChange={onYearChange}
-              loading={yearLoading}
             />
           )}
           <div className="relative w-40 sm:w-56 md:w-64 border border-blue-400 rounded-md">

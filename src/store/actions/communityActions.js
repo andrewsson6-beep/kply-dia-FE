@@ -3,10 +3,20 @@ import { domainApi } from '../../api/api.js';
 
 export const fetchCommunitiesThunk = createAsyncThunk(
   'community/fetchByParent',
-  async ({ parentType, parentId, year }, { rejectWithValue }) => {
+  async ({ parentType, parentId, year }, { rejectWithValue, signal }) => {
     try {
-      const list = await domainApi.fetchCommunities(parentType, parentId, year);
-      return { parentType, parentId, list };
+      const result = await domainApi.fetchCommunities(
+        parentType,
+        parentId,
+        year,
+        signal
+      );
+      return {
+        parentType,
+        parentId,
+        list: result.items,
+        emptyMessage: result.message,
+      };
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to load communities');
     }

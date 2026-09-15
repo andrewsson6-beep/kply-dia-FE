@@ -218,12 +218,16 @@ const formatINR = val => {
 };
 
 export const domainApi = {
-  fetchForanes: async year => {
+  fetchForanes: async (year, signal) => {
     try {
       const res = await axiosInstance.get('/forane-list', {
         ...(year ? { params: { year } } : {}),
+        ...(signal ? { signal } : {}),
       });
       const { code, data, msg } = res.data || {};
+      if (typeof data === 'string' && /no foranes present/i.test(data)) {
+        return { items: [], options: [], emptyMessage: data };
+      }
       if (code !== 200) {
         throw new Error(msg || 'Failed to load foranes');
       }
@@ -243,11 +247,17 @@ export const domainApi = {
         name: row.for_name,
         location: row.for_location,
       }));
-      return { items, options };
+      return { items, options, emptyMessage: null };
     } catch (error) {
       const res = error.response;
       if (res?.data) {
-        const { data, msg } = res.data;
+        const { code, data, msg } = res.data;
+        if (
+          typeof data === 'string' &&
+          (code === 400 || /no foranes present/i.test(data))
+        ) {
+          return { items: [], options: [], emptyMessage: data };
+        }
         throw new Error(
           (typeof data === 'string' && data) || msg || 'Failed to load foranes'
         );
@@ -318,12 +328,16 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchParishes: async year => {
+  fetchParishes: async (year, signal) => {
     try {
       const res = await axiosInstance.get('/all-parish-list', {
         ...(year ? { params: { year } } : {}),
+        ...(signal ? { signal } : {}),
       });
       const { code, data, msg } = res.data || {};
+      if (typeof data === 'string' && /no parishes present/i.test(data)) {
+        return { items: [], emptyMessage: data };
+      }
       if (code !== 200 || !Array.isArray(data)) {
         throw new Error(msg || 'Failed to load parishes');
       }
@@ -338,11 +352,17 @@ export const domainApi = {
         foraneId: row.par_for_id,
         code: row.par_code,
       }));
-      return items;
+      return { items, emptyMessage: null };
     } catch (error) {
       const res = error.response;
       if (res?.data) {
-        const { data, msg } = res.data;
+        const { code, data, msg } = res.data;
+        if (
+          typeof data === 'string' &&
+          (code === 400 || /no parishes present/i.test(data))
+        ) {
+          return { items: [], emptyMessage: data };
+        }
         throw new Error(
           (typeof data === 'string' && data) || msg || 'Failed to load parishes'
         );
@@ -350,14 +370,22 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchParishesByForane: async (forane_id, year) => {
+  fetchParishesByForane: async (forane_id, year, signal) => {
     try {
-      const res = await axiosInstance.post('/all_forane_parishes', {
-        forane_id,
-      }, year ? { params: { year } } : undefined);
+      const res = await axiosInstance.post(
+        '/all_forane_parishes',
+        { forane_id },
+        { ...(year ? { params: { year } } : {}), ...(signal ? { signal } : {}) }
+      );
       const { code, data, msg } = res.data || {};
       if (code !== 200) {
         throw new Error(msg || 'Failed to load parishes for forane');
+      }
+      if (
+        typeof data === 'string' &&
+        /no parishes present for this forane/i.test(data)
+      ) {
+        return { items: [], emptyMessage: data };
       }
       // Some backends return a string message when empty
       const list = Array.isArray(data) ? data : [];
@@ -372,11 +400,17 @@ export const domainApi = {
         foraneId: row.par_for_id,
         code: row.par_code,
       }));
-      return items;
+      return { items, emptyMessage: null };
     } catch (error) {
       const res = error.response;
       if (res?.data) {
-        const { data, msg } = res.data;
+        const { code, data, msg } = res.data;
+        if (
+          typeof data === 'string' &&
+          (code === 400 || /no parishes present for this forane/i.test(data))
+        ) {
+          return { items: [], emptyMessage: data };
+        }
         throw new Error(
           (typeof data === 'string' && data) ||
             msg ||
@@ -823,14 +857,17 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchCommunityDetails: async (com_id, year) => {
+  fetchCommunityDetails: async (com_id, year, signal) => {
     try {
       const res = await axiosInstance.post(
         '/community-details',
         { com_id },
-        year ? { params: { year } } : undefined
+        { ...(year ? { params: { year } } : {}), ...(signal ? { signal } : {}) }
       );
       const { code, data, msg } = res.data || {};
+      if (code === 400 && typeof data === 'string') {
+        return { emptyMessage: data, families: [] };
+      }
       if (code !== 200 || !data) {
         throw new Error(msg || 'Failed to load community');
       }
@@ -848,7 +885,10 @@ export const domainApi = {
     } catch (error) {
       const res = error.response;
       if (res?.data) {
-        const { data, msg } = res.data;
+        const { code, data, msg } = res.data;
+        if (code === 400 && typeof data === 'string') {
+          return { emptyMessage: data, families: [] };
+        }
         throw new Error(
           (typeof data === 'string' && data) ||
             msg ||
@@ -858,17 +898,26 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  fetchCommunities: async (parentType, parentId, year) => {
+  fetchCommunities: async (parentType, parentId, year, signal) => {
     // Currently supported only for parish context
     console.log('parentType, parentid', parentType, parentId);
     if (parentType !== 'parish') {
       throw new Error('Communities can only be fetched for a parish');
     }
     try {
-      const res = await axiosInstance.post('/community-list', {
-        parish_id: parentId,
-      }, year ? { params: { year } } : undefined);
+      const res = await axiosInstance.post(
+        '/community-list',
+        { parish_id: parentId },
+        { ...(year ? { params: { year } } : {}), ...(signal ? { signal } : {}) }
+      );
       const { code, data, msg } = res.data || {};
+      if (
+        code === 400 &&
+        typeof data === 'string' &&
+        /no communities present/i.test(data)
+      ) {
+        return { items: [], message: data };
+      }
       if (code !== 200 || !Array.isArray(data)) {
         throw new Error(msg || 'Failed to load communities');
       }
@@ -884,11 +933,17 @@ export const domainApi = {
         createdAt: row.com_created_at,
         createdBy: row.com_created_by,
       }));
-      return items;
+      return { items, message: null };
     } catch (error) {
       const res = error.response;
       if (res?.data) {
         const { data, msg } = res.data;
+        if (
+          typeof data === 'string' &&
+          /no communities present/i.test(data)
+        ) {
+          return { items: [], message: data };
+        }
         throw new Error(
           (typeof data === 'string' && data) ||
             msg ||

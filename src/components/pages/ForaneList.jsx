@@ -6,6 +6,7 @@ import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 const ForaneList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -14,7 +15,9 @@ const ForaneList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error } = useAppSelector(state => state.forane);
+  const { items, loading, error, emptyMessage } = useAppSelector(
+    state => state.forane
+  );
 
   // Always fetch fresh forane data on every visit
   useEffect(() => {
@@ -77,12 +80,7 @@ const ForaneList = () => {
         yearLoading={loading}
       />
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-        Forane List
-        {loading && (
-          <span className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-        )}
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">Forane List</h1>
       {error && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
           {error}
@@ -134,7 +132,7 @@ const ForaneList = () => {
       )}
 
       <div className="space-y-6 mt-2">
-        {filtered.map(c => (
+        {loading ? <CardListLoader count={4} /> : filtered.map(c => (
           <ChurchCard
             key={c.id}
             id={c.id}
@@ -151,8 +149,28 @@ const ForaneList = () => {
           />
         ))}
         {!loading && filtered.length === 0 && (
-          <div className="text-center text-gray-500 py-10">
-            {selectedLetter || searchTerm.trim() ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
+            {emptyMessage ? (
+              <div>
+                <p className="mb-6 text-sm text-gray-500 sm:text-base">
+                  {emptyMessage}
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <button
+                    onClick={() => setSelectedYear(null)}
+                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    View all years
+                  </button>
+                  <button
+                    onClick={() => navigate('/forane/add')}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Forane
+                  </button>
+                </div>
+              </div>
+            ) : selectedLetter || searchTerm.trim() ? (
               <div>
                 <p>No foranes match your current filters.</p>
                 <button
@@ -166,7 +184,15 @@ const ForaneList = () => {
                 </button>
               </div>
             ) : (
-              'No foranes found.'
+              <div>
+                <p className="mb-6">No foranes found.</p>
+                <button
+                  onClick={() => navigate('/forane/add')}
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  + Add Forane
+                </button>
+              </div>
             )}
           </div>
         )}

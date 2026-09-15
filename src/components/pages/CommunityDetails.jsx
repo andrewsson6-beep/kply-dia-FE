@@ -12,6 +12,8 @@ import {
   generateContributionReportPdf,
 } from '../../services/pdfHelper';
 import { FaFilePdf } from 'react-icons/fa6';
+import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 // Community Details page (skeleton similar to Individual/Institution visit pages)
 // Shows basic meta and totals; future: contributions at community level if API exists.
@@ -21,6 +23,7 @@ const CommunityDetails = () => {
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
+  const { selectedYear, setSelectedYear } = useYearFilter();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,7 +51,8 @@ const CommunityDetails = () => {
     setError('');
     try {
       const details = await domainApi.fetchCommunityDetails(
-        Number(communityId)
+        Number(communityId),
+        selectedYear || undefined
       );
       setData(details);
     } catch (e) {
@@ -61,7 +65,7 @@ const CommunityDetails = () => {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parishId, communityId]);
+  }, [parishId, communityId, selectedYear]);
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -157,6 +161,9 @@ const CommunityDetails = () => {
       <Header
         onSelect={() => {}}
         headerInfo={{ title: 'Community Details', subtitle: 'Overview' }}
+        showYearPicker={true}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
       />
       <div className="p-4 md:p-6">
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -214,9 +221,7 @@ const CommunityDetails = () => {
           </div>
         )}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <CardListLoader variant="detail" count={1} />
         ) : data ? (
           <div className="space-y-6">
             {isEditing ? (

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
+const YearPicker = ({ selectedYear = null, onChange }) => {
   const currentYear = new Date().getFullYear();
   const [open, setOpen] = useState(false);
   const [customYear, setCustomYear] = useState(selectedYear || '');
@@ -22,12 +22,11 @@ const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
   const handleCustomYearChange = event => {
     const value = event.target.value.replace(/\D/g, '').slice(0, 4);
     setCustomYear(value);
-    if (value.length === 4 && !loading) onChange?.(Number(value));
+    if (value.length === 4) onChange?.(Number(value));
   };
 
   const selectYear = year => {
     setCustomYear(year || '');
-    if (loading) return;
     onChange?.(year);
     setOpen(false);
   };
@@ -43,20 +42,11 @@ const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
           type="button"
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-busy={loading}
-          disabled={loading}
           onClick={() => setOpen(value => !value)}
           className={`inline-flex min-w-[112px] items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedYear ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
         >
           <span>{selectedYear || 'All years'}</span>
-          {loading ? (
-            <span
-              aria-label="Loading"
-              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-400 border-t-transparent"
-            />
-          ) : (
-            <span aria-hidden="true" className="text-xs">&#9662;</span>
-          )}
+          <span aria-hidden="true" className="text-xs">&#9662;</span>
         </button>
       </div>
 
@@ -71,7 +61,6 @@ const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
             role="option"
             aria-selected={!selectedYear}
               onClick={() => selectYear(null)}
-              disabled={loading}
             className="block w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50"
           >
             All years
@@ -87,7 +76,6 @@ const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
               role="option"
               aria-selected={selectedYear === year}
               onClick={() => selectYear(year)}
-              disabled={loading}
               className="block w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50"
             >
               {year}
@@ -103,7 +91,6 @@ const YearPicker = ({ selectedYear = null, onChange, loading = false }) => {
               placeholder="YYYY"
               value={customYear}
               onChange={handleCustomYearChange}
-              disabled={loading}
               className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </label>

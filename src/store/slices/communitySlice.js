@@ -16,6 +16,7 @@ const ensureParent = (state, key) => {
       items: [],
       loading: false,
       error: null,
+      emptyMessage: null,
       loaded: false,
     };
   }
@@ -33,13 +34,15 @@ const communitySlice = createSlice({
         ensureParent(state, key);
         state.byParent[key].loading = true;
         state.byParent[key].error = null;
+        state.byParent[key].emptyMessage = null;
       })
       .addCase(fetchCommunitiesThunk.fulfilled, (state, action) => {
-        const { parentType, parentId, list } = action.payload;
+        const { parentType, parentId, list, emptyMessage } = action.payload;
         const key = `${parentType}:${parentId}`;
         ensureParent(state, key);
         state.byParent[key].loading = false;
         state.byParent[key].items = list;
+        state.byParent[key].emptyMessage = emptyMessage || null;
         state.byParent[key].loaded = true;
       })
       .addCase(fetchCommunitiesThunk.rejected, (state, action) => {
@@ -49,6 +52,7 @@ const communitySlice = createSlice({
         state.byParent[key].loading = false;
         state.byParent[key].error =
           action.payload || 'Error loading communities';
+        state.byParent[key].emptyMessage = null;
         // Prevent infinite re-fetch loops on error
         state.byParent[key].loaded = true;
       })

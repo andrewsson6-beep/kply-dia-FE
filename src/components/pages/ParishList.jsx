@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 const ParishList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -15,7 +16,9 @@ const ParishList = () => {
   const navigate = useNavigate();
   const headerOffset = useHeaderOffset();
   const dispatch = useAppDispatch();
-  const { items, loading, error } = useAppSelector(state => state.parish);
+  const { items, loading, error, emptyMessage } = useAppSelector(
+    state => state.parish
+  );
   const { nameOptions } = useAppSelector(state => state.forane);
 
   // Always fetch fresh parish data on every visit
@@ -145,7 +148,7 @@ const ParishList = () => {
         </div>
       )}
       <div className="space-y-6">
-        {filteredItems.map((c, index) => (
+        {loading ? <CardListLoader count={4} /> : filteredItems.map((c, index) => (
           <ChurchCard
             key={c.id}
             id={index + 1}
@@ -162,14 +165,29 @@ const ParishList = () => {
             className="max-w-4xl mx-auto"
           />
         ))}
-        {loading && (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
         {!loading && filteredItems.length === 0 && (
-          <div className="text-center text-gray-500 py-10">
-            {selectedLetter || searchTerm.trim() ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
+            {emptyMessage ? (
+              <div>
+                <p className="mb-6 text-sm text-gray-500 sm:text-base">
+                  {emptyMessage}
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <button
+                    onClick={() => setSelectedYear(null)}
+                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    View all years
+                  </button>
+                  <button
+                    onClick={() => navigate('/parish/add')}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Parish
+                  </button>
+                </div>
+              </div>
+            ) : selectedLetter || searchTerm.trim() ? (
               <div>
                 <p>No parishes match your current filters.</p>
                 <button
@@ -183,7 +201,23 @@ const ParishList = () => {
                 </button>
               </div>
             ) : (
-              'No parishes found.'
+              <div>
+                <p className="mb-6">No parishes found.</p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <button
+                    onClick={() => setSelectedYear(null)}
+                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    View all years
+                  </button>
+                  <button
+                    onClick={() => navigate('/parish/add')}
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Parish
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}

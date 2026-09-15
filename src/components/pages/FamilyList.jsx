@@ -15,6 +15,7 @@ import {
   updateFamilyThunk,
 } from '../../store/actions/familyActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -29,6 +30,7 @@ function FamilyList() {
   const [families, setFamilies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emptyMessage, setEmptyMessage] = useState('');
   const [communityName, setCommunityName] = useState('');
 
   const [contributionFor, setContributionFor] = useState(null); // family id | null
@@ -108,9 +110,12 @@ function FamilyList() {
   const reloadFromCommunityDetails = async year => {
     setLoading(true);
     setError('');
+    setEmptyMessage('');
+    setFamilies([]);
     try {
       const details = await domainApi.fetchCommunityDetails(cid, year);
       setCommunityName(details?.name || `Community #${cid}`);
+      setEmptyMessage(details?.emptyMessage || '');
       const fams = Array.isArray(details?.families) ? details.families : [];
       const mapped = fams.map(row => ({
         id: row.fam_id,
@@ -252,7 +257,9 @@ function FamilyList() {
             )}
           </div>
         )}
-        {filteredFamilies.length > 0 ? (
+        {loading ? (
+          <CardListLoader variant="family" count={4} />
+        ) : filteredFamilies.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {filteredFamilies.map(f => (
               <FamilyCard
@@ -270,13 +277,21 @@ function FamilyList() {
               />
             ))}
           </div>
-        ) : loading ? (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center py-24">
-            {selectedLetter || searchTerm.trim() ? (
+            {emptyMessage ? (
+              <div>
+                <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                  {emptyMessage}
+                </p>
+                <button
+                  onClick={() => setSelectedYear(null)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+                >
+                  View all years
+                </button>
+              </div>
+            ) : selectedLetter || searchTerm.trim() ? (
               <div>
                 <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
                   No families match your current filters.

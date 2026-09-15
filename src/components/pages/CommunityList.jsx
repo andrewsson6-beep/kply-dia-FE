@@ -12,6 +12,7 @@ import {
 } from '../../store/actions/communityActions.js';
 import { fetchParishesThunk } from '../../store/actions/parishActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
+import CardListLoader from '../ui/CardListLoader';
 
 const CommunityList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -62,9 +63,10 @@ const CommunityList = () => {
         items: [],
         loading: false,
         error: null,
+          emptyMessage: null,
       }
   );
-  const { items, loading, error } = communityState;
+        const { items, loading, error, emptyMessage } = communityState;
   const parishState = useAppSelector(state => state.parish);
   const parishName = useAppSelector(state => {
     if (!parishId) return null;
@@ -78,10 +80,7 @@ const CommunityList = () => {
   };
 
   useEffect(() => {
-    if (
-      parentId &&
-      !loading
-    ) {
+    if (parentId) {
       dispatch(fetchCommunitiesThunk({
         parentType,
         parentId,
@@ -91,9 +90,6 @@ const CommunityList = () => {
   }, [
     parentId,
     parentType,
-    communityState.loaded,
-    communityState.error,
-    loading,
     selectedYear,
     dispatch,
   ]);
@@ -245,7 +241,9 @@ const CommunityList = () => {
             )}
           </div>
         )}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <CardListLoader variant="community" count={8} />
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map(c => (
               <CommunityCard
@@ -257,13 +255,21 @@ const CommunityList = () => {
               />
             ))}
           </div>
-        ) : loading ? (
-          <div className="flex justify-center py-10">
-            <span className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          </div>
         ) : (
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center shadow-sm">
-            {selectedLetter || searchTerm.trim() ? (
+            {emptyMessage ? (
+              <div>
+                <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
+                  {emptyMessage}
+                </p>
+                <button
+                  onClick={() => setSelectedYear(null)}
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  View all years
+                </button>
+              </div>
+            ) : selectedLetter || searchTerm.trim() ? (
               <div>
                 <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
                   No communities match your current filters.
@@ -288,7 +294,8 @@ const CommunityList = () => {
             ) : (
               <div>
                 <p className="text-gray-500 mb-6 text-sm sm:text-base max-w-md">
-                  No communities yet. Create the first community to get started.
+                  {emptyMessage ||
+                    'No communities yet. Create the first community to get started.'}
                 </p>
                 <button
                   onClick={() => setShowAdd(true)}

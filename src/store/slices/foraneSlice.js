@@ -6,6 +6,7 @@ const initialState = {
   nameOptions: [], // {id, name, location}
   loading: false,
   error: null,
+  emptyMessage: null,
   loaded: false,
 };
 
@@ -18,16 +19,19 @@ const foraneSlice = createSlice({
       .addCase(fetchForanesThunk.pending, state => {
         state.loading = true;
         state.error = null;
+        state.emptyMessage = null;
       })
       .addCase(fetchForanesThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.items || [];
         state.nameOptions = action.payload.options || [];
+        state.emptyMessage = action.payload.emptyMessage || null;
         state.loaded = true;
       })
       .addCase(fetchForanesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading foranes';
+        state.emptyMessage = null;
         // Mark as loaded to prevent infinite re-fetch loops on error
         state.loaded = true;
       })

@@ -9,6 +9,7 @@ const initialState = {
   items: [],
   loading: false,
   error: null,
+  emptyMessage: null,
   loaded: false,
   byForane: {}, // { [foraneId]: { items, loading, error, loaded } }
 };
@@ -22,15 +23,18 @@ const parishSlice = createSlice({
       .addCase(fetchParishesThunk.pending, state => {
         state.loading = true;
         state.error = null;
+        state.emptyMessage = null;
       })
       .addCase(fetchParishesThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items || [];
+        state.emptyMessage = action.payload.emptyMessage || null;
         state.loaded = true;
       })
       .addCase(fetchParishesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Error loading parishes';
+        state.emptyMessage = null;
         // Prevent re-fetch loops on error
         state.loaded = true;
       })
@@ -41,17 +45,20 @@ const parishSlice = createSlice({
           items: [],
           loading: false,
           error: null,
+          emptyMessage: null,
           loaded: false,
         };
         state.byForane[foraneId].loading = true;
         state.byForane[foraneId].error = null;
+        state.byForane[foraneId].emptyMessage = null;
       })
       .addCase(fetchParishesByForaneThunk.fulfilled, (state, action) => {
-        const { foraneId, items } = action.payload;
+        const { foraneId, items, emptyMessage } = action.payload;
         state.byForane[foraneId] = {
           items,
           loading: false,
           error: null,
+          emptyMessage: emptyMessage || null,
           loaded: true,
         };
       })
@@ -61,11 +68,13 @@ const parishSlice = createSlice({
           items: [],
           loading: false,
           error: null,
+          emptyMessage: null,
           loaded: false,
         };
         state.byForane[foraneId].loading = false;
         state.byForane[foraneId].error =
           action.payload || 'Error loading parishes';
+        state.byForane[foraneId].emptyMessage = null;
         // Prevent re-fetch loops on error for this forane
         state.byForane[foraneId].loaded = true;
       })
