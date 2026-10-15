@@ -10,7 +10,9 @@ import {
   addCommunityThunk,
   fetchCommunitiesThunk,
 } from '../../store/actions/communityActions.js';
-import { fetchParishesThunk } from '../../store/actions/parishActions.js';
+import { fetchParishesThunk, deleteParishThunk } from '../../store/actions/parishActions.js';
+import { useToast } from '../ui/useToast.js';
+import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import useYearFilter from '../../hooks/useYearFilter.js';
 import CardListLoader from '../ui/CardListLoader';
 
@@ -25,6 +27,9 @@ const CommunityList = () => {
 
   const dispatch = useAppDispatch();
   const [showAdd, setShowAdd] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { showToast } = useToast();
 
   const { parishId, foraneId } = useParams();
   const inForaneContext = Boolean(foraneId) && !parishId;
@@ -136,6 +141,20 @@ const CommunityList = () => {
     setShowAdd(false);
   };
 
+  const handleDeleteParish = async () => {
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteParishThunk(Number(parishId))).unwrap();
+      showToast('Parish deleted successfully', { type: 'success' });
+      setShowDelete(false);
+      handleBack();
+    } catch (e) {
+      showToast(e || 'Failed to delete parish', { type: 'error' });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div
       className="min-h-full bg-slate-50 p-4 sm:p-6"
@@ -181,13 +200,23 @@ const CommunityList = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            <span className="text-lg leading-none" aria-hidden="true">+</span>
-            Add community
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {!inForaneContext && (
+              <button
+                onClick={() => setShowDelete(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+              >
+                Delete parish
+              </button>
+            )}
+            <button
+              onClick={() => setShowAdd(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <span className="text-lg leading-none" aria-hidden="true">+</span>
+              Add community
+            </button>
+          </div>
         </div>
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -333,6 +362,14 @@ const CommunityList = () => {
           parishName={parishName}
         />
       </Modal>
+
+      <DeleteConfirmModal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        onConfirm={handleDeleteParish}
+        isDeleting={isDeleting}
+        message={`Are you sure you want to delete ${parishName || 'this parish'}? This action cannot be undone.`}
+      />
     </div>
   );
 };

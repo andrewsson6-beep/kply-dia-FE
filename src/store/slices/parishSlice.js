@@ -3,6 +3,7 @@ import {
   fetchParishesThunk,
   addParishThunk,
   fetchParishesByForaneThunk,
+  deleteParishThunk,
 } from '../actions/parishActions.js';
 
 const initialState = {
@@ -86,6 +87,13 @@ const parishSlice = createSlice({
       })
       .addCase(addParishThunk.rejected, (state, action) => {
         state.error = action.payload || 'Failed to add parish';
+      })
+      .addCase(deleteParishThunk.fulfilled, (state, action) => {
+        const id = action.payload;
+        state.items = state.items.filter(p => p.id !== id);
+        Object.values(state.byForane).forEach(entry => {
+          entry.items = entry.items.filter(p => p.id !== id);
+        });
       });
   },
 });

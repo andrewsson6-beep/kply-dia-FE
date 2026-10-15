@@ -23,6 +23,18 @@ export const addParishThunk = createAsyncThunk(
   }
 );
 
+export const deleteParishThunk = createAsyncThunk(
+  'parish/delete',
+  async (parishId, { rejectWithValue }) => {
+    try {
+      await domainApi.deleteParish({ par_id: parishId });
+      return parishId;
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to delete parish');
+    }
+  }
+);
+
 export const fetchParishesByForaneThunk = createAsyncThunk(
   'parish/fetchByForane',
   async ({ foraneId, year }, { rejectWithValue, signal }) => {

@@ -5,7 +5,9 @@ import ChurchCard from '../ui/ChurchCard';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesByForaneThunk } from '../../store/actions/parishActions.js';
-import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
+import { fetchForanesThunk, deleteForaneThunk } from '../../store/actions/foraneActions.js';
+import { useToast } from '../ui/useToast.js';
+import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import useYearFilter from '../../hooks/useYearFilter.js';
 import CardListLoader from '../ui/CardListLoader';
 
@@ -19,6 +21,9 @@ const ForaneParishList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedYear, setSelectedYear } = useYearFilter();
+  const [showDelete, setShowDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { showToast } = useToast();
 
   const foraneState = useAppSelector(state => state.forane);
   const parishForaneState = useAppSelector(
@@ -69,6 +74,20 @@ const ForaneParishList = () => {
     const from = location.state?.from;
     if (from) return navigate(from);
     return navigate('/forane/list');
+  };
+
+  const handleDeleteForane = async () => {
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteForaneThunk(Number(foraneId))).unwrap();
+      showToast('Forane deleted successfully', { type: 'success' });
+      setShowDelete(false);
+      navigate('/forane/list', { replace: true });
+    } catch (e) {
+      showToast(e || 'Failed to delete forane', { type: 'error' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSearchChange = searchValue => {
@@ -128,6 +147,12 @@ const ForaneParishList = () => {
             onClick={handleBack}
           >
             &larr; Back
+          </button>
+          <button
+            className="px-4 py-2 bg-red-50 border border-red-200 text-red-700 rounded hover:bg-red-100 cursor-pointer text-sm font-semibold"
+            onClick={() => setShowDelete(true)}
+          >
+            Delete forane
           </button>
           {/* <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
             Forane Parishes
@@ -264,6 +289,14 @@ const ForaneParishList = () => {
           )}
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        onConfirm={handleDeleteForane}
+        isDeleting={isDeleting}
+        message={`Are you sure you want to delete ${currentForaneName}? This action cannot be undone.`}
+      />
     </div>
   );
 };

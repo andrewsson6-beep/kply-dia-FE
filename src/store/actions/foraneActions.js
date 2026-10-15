@@ -12,6 +12,18 @@ export const fetchForanesThunk = createAsyncThunk(
   }
 );
 
+export const deleteForaneThunk = createAsyncThunk(
+  'forane/delete',
+  async (foraneId, { rejectWithValue }) => {
+    try {
+      await domainApi.deleteForane({ for_id: foraneId });
+      return foraneId;
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to delete forane');
+    }
+  }
+);
+
 export const addForaneThunk = createAsyncThunk(
   'forane/add',
   async (payload, { rejectWithValue }) => {
