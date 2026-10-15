@@ -240,6 +240,7 @@ export const domainApi = {
         vicarName: row.for_vicar_name,
         contactNumber: row.for_contact_number,
         totalAmount: formatINR(row.for_total_contribution_amount),
+        totalContributionAmount: row.for_total_contribution_amount,
         imageUrl: undefined,
       }));
       const options = list.map(row => ({
@@ -367,6 +368,48 @@ export const domainApi = {
         const { data, msg } = res.data;
         throw new Error(
           (typeof data === 'string' && data) || msg || 'Failed to delete parish'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateForane: async payload => {
+    try {
+      const res = await axiosInstance.post('/update-forane-details', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update forane'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update forane'
+        );
+      }
+      throw new Error(error.message || 'Network error');
+    }
+  },
+  updateParish: async payload => {
+    try {
+      const res = await axiosInstance.post('/update-parish-details', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update parish'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to update parish'
         );
       }
       throw new Error(error.message || 'Network error');

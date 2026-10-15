@@ -10,7 +10,8 @@ import {
   addCommunityThunk,
   fetchCommunitiesThunk,
 } from '../../store/actions/communityActions.js';
-import { fetchParishesThunk, deleteParishThunk } from '../../store/actions/parishActions.js';
+import { fetchParishesThunk, deleteParishThunk, updateParishThunk } from '../../store/actions/parishActions.js';
+import ChurchForm from '../forms/ChurchForm';
 import { useToast } from '../ui/useToast.js';
 import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import useYearFilter from '../../hooks/useYearFilter.js';
@@ -28,6 +29,7 @@ const CommunityList = () => {
   const dispatch = useAppDispatch();
   const [showAdd, setShowAdd] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { showToast } = useToast();
 
@@ -73,12 +75,27 @@ const CommunityList = () => {
   );
         const { items, loading, error, emptyMessage } = communityState;
   const parishState = useAppSelector(state => state.parish);
-  const parishName = useAppSelector(state => {
-    if (!parishId) return null;
-    const id = Number(parishId);
-    const found = state.parish.items.find(p => p.id === id);
-    return found ? found.churchName : null;
-  });
+  const parish = useMemo(
+    () =>
+      parishId
+        ? parishState.items.find(p => p.id === Number(parishId)) || null
+        : null,
+    [parishState.items, parishId]
+  );
+  const parishName = parish ? parish.churchName : null;
+
+  const parishInitialData = useMemo(
+    () =>
+      parish
+        ? {
+            churchName: parish.churchName,
+            place: parish.place,
+            vicarName: parish.vicarName,
+            contactNumber: parish.contactNumber,
+          }
+        : null,
+    [parish]
+  );
 
   const handleSearchChange = searchValue => {
     setSearchTerm(searchValue);
@@ -141,6 +158,25 @@ const CommunityList = () => {
     setShowAdd(false);
   };
 
+  const handleUpdateParish = async formData => {
+    try {
+      await dispatch(
+        updateParishThunk({
+          par_id: Number(parishId),
+          par_code: parish?.code || '',
+          par_name: formData.churchName.trim(),
+          par_location: formData.place.trim(),
+          par_vicar_name: formData.vicarName.trim(),
+          par_contact_number: formData.contactNumber.trim(),
+        })
+      ).unwrap();
+      showToast('Parish updated successfully', { type: 'success' });
+      setShowEdit(false);
+    } catch (e) {
+      showToast(e || 'Failed to update parish', { type: 'error' });
+    }
+  };
+
   const handleDeleteParish = async () => {
     setIsDeleting(true);
     try {
@@ -201,6 +237,15 @@ const CommunityList = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {!inForaneContext && (
+              <button
+                onClick={() => setShowEdit(true)}
+                disabled={!parish}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Edit parish
+              </button>
+            )}
             {!inForaneContext && (
               <button
                 onClick={() => setShowDelete(true)}
@@ -360,6 +405,23 @@ const CommunityList = () => {
           parentType={parentType}
           parentId={parentId}
           parishName={parishName}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Edit Parish"
+        size="lg"
+        variant="center"
+        closeOnBackdrop={false}
+      >
+        <ChurchForm
+          isEdit
+          initialData={parishInitialData}
+          onSubmit={handleUpdateParish}
+          onCancel={() => setShowEdit(false)}
+          className="border-0 shadow-none"
         />
       </Modal>
 

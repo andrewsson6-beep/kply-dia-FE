@@ -3,6 +3,7 @@ import {
   fetchForanesThunk,
   addForaneThunk,
   deleteForaneThunk,
+  updateForaneThunk,
 } from '../actions/foraneActions.js';
 
 const initialState = {
@@ -54,6 +55,17 @@ const foraneSlice = createSlice({
         const id = action.payload;
         state.items = state.items.filter(f => f.id !== id);
         state.nameOptions = state.nameOptions.filter(f => f.id !== id);
+      })
+      .addCase(updateForaneThunk.fulfilled, (state, action) => {
+        const { id, changes } = action.payload;
+        state.items = state.items.map(f =>
+          f.id === id ? { ...f, ...changes } : f
+        );
+        state.nameOptions = state.nameOptions.map(f =>
+          f.id === id
+            ? { ...f, name: changes.churchName, location: changes.place }
+            : f
+        );
       });
   },
 });

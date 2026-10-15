@@ -17,13 +17,20 @@ const generateForaneCode = (name, location) => {
   return `${l ? l : 'FORANE'}-${n ? n : '0001'}`;
 };
 
-const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
+const ForaneForm = ({
+  onSubmit,
+  onCancel,
+  className = '',
+  initialData = null,
+  isEdit = false,
+}) => {
   const [form, setForm] = useState({
-    for_name: '',
-    for_location: '',
-    for_vicar_name: '',
-    for_contact_number: '',
+    for_name: initialData?.churchName || '',
+    for_location: initialData?.place || '',
+    for_vicar_name: initialData?.vicarName || '',
+    for_contact_number: initialData?.contactNumber || '',
   });
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const for_code = useMemo(
     () => generateForaneCode(form.for_name, form.for_location),
@@ -44,22 +51,28 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
       e.for_vicar_name = 'Vicar name is required';
     if (!form.for_contact_number.trim())
       e.for_contact_number = 'Contact is required';
-    if (!for_code) e.for_code = 'Code cannot be empty';
+    if (!isEdit && !for_code) e.for_code = 'Code cannot be empty';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const submit = e => {
+  const submit = async e => {
     e.preventDefault();
     if (!validate()) return;
     const payload = {
-      for_code,
+      ...(!isEdit && { for_code }),
       for_name: form.for_name.trim(),
       for_location: form.for_location.trim(),
       for_vicar_name: form.for_vicar_name.trim(),
       for_contact_number: form.for_contact_number.trim(),
     };
-    onSubmit && onSubmit(payload);
+    if (!onSubmit) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(payload);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -133,33 +146,43 @@ const ForaneForm = ({ onSubmit, onCancel, className = '' }) => {
               </p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-blue-600 mb-1">
-              Forane Code (auto)
-            </label>
-            <input
-              value={for_code}
-              readOnly
-              className="w-full rounded-md border p-2 text-sm bg-gray-100 border-gray-300"
-            />
-            {errors.for_code && (
-              <p className="text-xs text-red-600 mt-1">{errors.for_code}</p>
-            )}
-          </div>
+          {!isEdit && (
+            <div>
+              <label className="block text-sm font-medium text-blue-600 mb-1">
+                Forane Code (auto)
+              </label>
+              <input
+                value={for_code}
+                readOnly
+                className="w-full rounded-md border p-2 text-sm bg-gray-100 border-gray-300"
+              />
+              {errors.for_code && (
+                <p className="text-xs text-red-600 mt-1">{errors.for_code}</p>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-3 justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-md bg-gray-500 text-white text-sm hover:bg-gray-600"
+            disabled={submitting}
+            className="px-4 py-2 rounded-md bg-gray-500 text-white text-sm hover:bg-gray-600 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            disabled={submitting}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
           >
-            Add Forane
+            {submitting
+              ? isEdit
+                ? 'Updating...'
+                : 'Adding...'
+              : isEdit
+                ? 'Update Forane'
+                : 'Add Forane'}
           </button>
         </div>
       </form>

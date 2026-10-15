@@ -5,9 +5,11 @@ import ChurchCard from '../ui/ChurchCard';
 import useHeaderOffset from '../../hooks/useHeaderOffset';
 import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
 import { fetchParishesByForaneThunk } from '../../store/actions/parishActions.js';
-import { fetchForanesThunk, deleteForaneThunk } from '../../store/actions/foraneActions.js';
+import { fetchForanesThunk, deleteForaneThunk, updateForaneThunk } from '../../store/actions/foraneActions.js';
 import { useToast } from '../ui/useToast.js';
 import DeleteConfirmModal from '../ui/DeleteConfirmModal';
+import Modal from '../ui/Modal';
+import ForaneForm from '../forms/ForaneForm';
 import useYearFilter from '../../hooks/useYearFilter.js';
 import CardListLoader from '../ui/CardListLoader';
 
@@ -22,6 +24,7 @@ const ForaneParishList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedYear, setSelectedYear } = useYearFilter();
   const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { showToast } = useToast();
 
@@ -74,6 +77,31 @@ const ForaneParishList = () => {
     const from = location.state?.from;
     if (from) return navigate(from);
     return navigate('/forane/list');
+  };
+
+  const currentForane = useMemo(
+    () => (foraneState.items || []).find(f => f.id === Number(foraneId)),
+    [foraneState.items, foraneId]
+  );
+
+  const handleUpdateForane = async formData => {
+    try {
+      await dispatch(
+        updateForaneThunk({
+          for_id: Number(foraneId),
+          for_name: formData.for_name,
+          for_location: formData.for_location,
+          for_vicar_name: formData.for_vicar_name,
+          for_contact_number: formData.for_contact_number,
+          for_total_contribution_amount:
+            Number(currentForane?.totalContributionAmount) || 0,
+        })
+      ).unwrap();
+      showToast('Forane updated successfully', { type: 'success' });
+      setShowEdit(false);
+    } catch (e) {
+      showToast(e || 'Failed to update forane', { type: 'error' });
+    }
   };
 
   const handleDeleteForane = async () => {
@@ -148,12 +176,21 @@ const ForaneParishList = () => {
           >
             &larr; Back
           </button>
-          <button
-            className="px-4 py-2 bg-red-50 border border-red-200 text-red-700 rounded hover:bg-red-100 cursor-pointer text-sm font-semibold"
-            onClick={() => setShowDelete(true)}
-          >
-            Delete forane
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded hover:bg-blue-100 cursor-pointer text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setShowEdit(true)}
+              disabled={!currentForane}
+            >
+              Edit forane
+            </button>
+            <button
+              className="px-4 py-2 bg-red-50 border border-red-200 text-red-700 rounded hover:bg-red-100 cursor-pointer text-sm font-semibold"
+              onClick={() => setShowDelete(true)}
+            >
+              Delete forane
+            </button>
+          </div>
           {/* <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
             Forane Parishes
             {loading && (
@@ -289,6 +326,23 @@ const ForaneParishList = () => {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Edit Forane"
+        size="lg"
+        variant="center"
+        closeOnBackdrop={false}
+      >
+        <ForaneForm
+          isEdit
+          initialData={currentForane}
+          onSubmit={handleUpdateForane}
+          onCancel={() => setShowEdit(false)}
+          className="border-0 shadow-none"
+        />
+      </Modal>
 
       <DeleteConfirmModal
         isOpen={showDelete}

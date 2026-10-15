@@ -35,6 +35,27 @@ export const deleteParishThunk = createAsyncThunk(
   }
 );
 
+export const updateParishThunk = createAsyncThunk(
+  'parish/update',
+  async (payload, { rejectWithValue }) => {
+    try {
+      await domainApi.updateParish(payload);
+      return {
+        id: payload.par_id,
+        changes: {
+          code: payload.par_code,
+          churchName: payload.par_name,
+          place: payload.par_location,
+          vicarName: payload.par_vicar_name,
+          contactNumber: payload.par_contact_number,
+        },
+      };
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to update parish');
+    }
+  }
+);
+
 export const fetchParishesByForaneThunk = createAsyncThunk(
   'parish/fetchByForane',
   async ({ foraneId, year }, { rejectWithValue, signal }) => {

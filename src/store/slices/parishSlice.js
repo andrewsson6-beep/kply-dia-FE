@@ -4,6 +4,7 @@ import {
   addParishThunk,
   fetchParishesByForaneThunk,
   deleteParishThunk,
+  updateParishThunk,
 } from '../actions/parishActions.js';
 
 const initialState = {
@@ -93,6 +94,14 @@ const parishSlice = createSlice({
         state.items = state.items.filter(p => p.id !== id);
         Object.values(state.byForane).forEach(entry => {
           entry.items = entry.items.filter(p => p.id !== id);
+        });
+      })
+      .addCase(updateParishThunk.fulfilled, (state, action) => {
+        const { id, changes } = action.payload;
+        const merge = p => (p.id === id ? { ...p, ...changes } : p);
+        state.items = state.items.map(merge);
+        Object.values(state.byForane).forEach(entry => {
+          entry.items = entry.items.map(merge);
         });
       });
   },

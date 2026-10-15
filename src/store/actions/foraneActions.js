@@ -24,6 +24,26 @@ export const deleteForaneThunk = createAsyncThunk(
   }
 );
 
+export const updateForaneThunk = createAsyncThunk(
+  'forane/update',
+  async (payload, { rejectWithValue }) => {
+    try {
+      await domainApi.updateForane(payload);
+      return {
+        id: payload.for_id,
+        changes: {
+          churchName: payload.for_name,
+          place: payload.for_location,
+          vicarName: payload.for_vicar_name,
+          contactNumber: payload.for_contact_number,
+        },
+      };
+    } catch (e) {
+      return rejectWithValue(e.message || 'Failed to update forane');
+    }
+  }
+);
+
 export const addForaneThunk = createAsyncThunk(
   'forane/add',
   async (payload, { rejectWithValue }) => {
