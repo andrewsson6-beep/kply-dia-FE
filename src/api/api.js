@@ -1167,15 +1167,27 @@ export const domainApi = {
       throw new Error(error.message || 'Network error');
     }
   },
-  deleteFamily: async (communityId, id) => {
-    await delay(300);
-    const list = mockFamilies[communityId] || [];
-    const idx = list.findIndex(f => f.id === id);
-    if (idx !== -1) {
-      const removed = list.splice(idx, 1)[0];
-      return removed;
+  deleteFamily: async payload => {
+    try {
+      // payload: { fam_id }
+      const res = await axiosInstance.post('/delete-family', payload);
+      const { code, data, msg } = res.data || {};
+      if (code !== 200) {
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to delete family'
+        );
+      }
+      return data;
+    } catch (error) {
+      const res = error.response;
+      if (res?.data) {
+        const { data, msg } = res.data;
+        throw new Error(
+          (typeof data === 'string' && data) || msg || 'Failed to delete family'
+        );
+      }
+      throw new Error(error.message || 'Network error');
     }
-    throw new Error('Family not found');
   },
   addContribution: async (communityId, familyId, data) => {
     await delay(300);

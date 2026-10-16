@@ -41,8 +41,8 @@ export const deleteFamilyThunk = createAsyncThunk(
   'family/delete',
   async ({ communityId, id }, { rejectWithValue }) => {
     try {
-      const removed = await domainApi.deleteFamily(communityId, id);
-      return { communityId, id: removed.id };
+      await domainApi.deleteFamily({ fam_id: Number(id) });
+      return { communityId, id };
     } catch (e) {
       return rejectWithValue(e.message || 'Failed to delete family');
     }

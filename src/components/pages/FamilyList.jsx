@@ -16,6 +16,7 @@ import {
 } from '../../store/actions/familyActions.js';
 import useYearFilter from '../../hooks/useYearFilter.js';
 import CardListLoader from '../ui/CardListLoader';
+import { useToast } from '../ui/useToast.js';
 
 function FamilyList() {
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -36,6 +37,8 @@ function FamilyList() {
   const [contributionFor, setContributionFor] = useState(null); // family id | null
   const [editingFamily, setEditingFamily] = useState(null); // family object | null
   const [deletingFamily, setDeletingFamily] = useState(null); // family object | null
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { showToast } = useToast();
   const [showAdd, setShowAdd] = useState(false); // add family drawer
   const communityOptions = Array.from(
     new Set(families.map(f => f.community).filter(Boolean))
@@ -76,7 +79,8 @@ function FamilyList() {
     if (fam) setEditingFamily(fam);
   };
 
-  const submitEdit = data => {
+  const submitEdit = formData => {
+    const data = { ...formData, id: editingFamily?.id };
     dispatch(updateFamilyThunk({ communityId: cid, data }));
     // Optimistically update local list (mock update)
     setFamilies(prev =>
@@ -90,12 +94,25 @@ function FamilyList() {
     if (fam) setDeletingFamily(fam);
   };
 
-  const confirmDelete = () => {
-    if (deletingFamily)
-      dispatch(deleteFamilyThunk({ communityId: cid, id: deletingFamily.id }));
-    // Optimistically update local list (mock delete)
-    setFamilies(prev => prev.filter(f => f.id !== deletingFamily?.id));
-    setDeletingFamily(null);
+  const confirmDelete = async () => {
+    if (!deletingFamily || isDeleting) return;
+    const famId = deletingFamily.id;
+    setIsDeleting(true);
+    try {
+      await dispatch(
+        deleteFamilyThunk({ communityId: cid, id: famId })
+      ).unwrap();
+      setFamilies(prev => prev.filter(f => f.id !== famId));
+      setDeletingFamily(null);
+      showToast('Family deleted successfully', { type: 'success' });
+    } catch (e) {
+      showToast(
+        (typeof e === 'string' ? e : e?.message) || 'Failed to delete family',
+        { type: 'error' }
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const submitAdd = data => {
@@ -412,15 +429,17 @@ function FamilyList() {
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => setDeletingFamily(null)}
-            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
+            disabled={isDeleting}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
             Cancel
           </button>
           <button
             onClick={confirmDelete}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-red-400"
+            disabled={isDeleting}
+            className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md text-sm shadow cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-red-400"
           >
-            Delete
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </Modal>
