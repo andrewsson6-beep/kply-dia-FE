@@ -10,6 +10,8 @@ import LoginPage from './components/auth/LoginPage.jsx';
 import ForgotPassword from './components/auth/ForgotPassword.jsx';
 import { useEffect } from 'react';
 import { fetchForanesThunk } from './store/actions/foraneActions.js';
+import { clearAuth } from './store/slices/authSlice.js';
+import { parseExpiry, isTokenExpired } from './utils/authSession.js';
 
 function App() {
   const location = useLocation();
@@ -17,9 +19,23 @@ function App() {
   const isAuthRoute = authRoutes.includes(location.pathname);
   const isAuthenticated = useIsAuthenticated();
   const dispatch = useAppDispatch();
+  const tokenExpiresAt = useAppSelector(state => state.auth.tokenExpiresAt);
   const { loaded: foraneLoaded, loading: foraneLoading } = useAppSelector(
     state => state.forane
   );
+
+  // Proactively end the session when the token expires so routing stays consistent
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const expiresAt = parseExpiry(tokenExpiresAt);
+    if (expiresAt === null) return undefined;
+    // setTimeout overflows past ~24.8 days
+    const delay = Math.min(Math.max(expiresAt - Date.now(), 0), 2147483647);
+    const id = setTimeout(() => {
+      if (isTokenExpired(tokenExpiresAt)) dispatch(clearAuth());
+    }, delay);
+    return () => clearTimeout(id);
+  }, [isAuthenticated, tokenExpiresAt, dispatch]);
 
   // Preload forane list right after login (to support mapping forane names elsewhere)
   useEffect(() => {
@@ -28,9 +44,9 @@ function App() {
     }
   }, [isAuthenticated, foraneLoaded, foraneLoading, dispatch]);
 
-  // Redirect root to login page
+  // Redirect root to dashboard/login depending on session
   if (location.pathname === '/') {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
   }
 
   if (isAuthRoute) {

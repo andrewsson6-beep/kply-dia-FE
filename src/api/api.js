@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { parseExpiry } from '../utils/authSession.js';
 
 // Base URL from env; fallback to local dev
 const API_BASE_URL =
@@ -28,6 +29,8 @@ axiosInstance.interceptors.request.use(config => {
   const isMockToken =
     typeof accessToken === 'string' &&
     accessToken.startsWith('mock-jwt-token-');
+  // Remember which token this request used so a stale 401 can be ignored later
+  config.authTokenUsed = isMockToken ? null : accessToken || null;
   if (accessToken && !isMockToken && !config.headers?.Authorization) {
     config.headers = {
       ...config.headers,
@@ -49,13 +52,15 @@ axiosInstance.interceptors.response.use(
     const res = error.response;
     const msg = res?.data?.msg || res?.data?.data || error.message || '';
     const code = res?.data?.code;
+    const isLoginRequest = /\/userlogin\b/.test(String(error.config?.url || ''));
     if (
-      res?.status === 401 ||
-      code === 401 ||
-      /token invalid/i.test(String(msg))
+      !isLoginRequest &&
+      (res?.status === 401 ||
+        code === 401 ||
+        /token invalid/i.test(String(msg)))
     ) {
       try {
-        onUnauthorized && onUnauthorized();
+        onUnauthorized && onUnauthorized(error.config?.authTokenUsed || null);
       } catch {
         // no-op
       }
@@ -148,11 +153,19 @@ export const authApi = {
         roleId: usr_rol_id,
       };
 
+      // A token that is already "expired" at login time means the backend timestamp
+      // uses a different timezone/clock; don't self-lock out, let the server decide.
+      const expiryMs = parseExpiry(access_token_expire_time);
+      const tokenExpiresAt =
+        expiryMs !== null && expiryMs > Date.now()
+          ? access_token_expire_time
+          : null;
+
       return {
         user,
         accessToken: access_token,
         refreshToken: null,
-        tokenExpiresAt: access_token_expire_time || null,
+        tokenExpiresAt,
         sessionUuid: session_uuid || null,
       };
     } catch (error) {

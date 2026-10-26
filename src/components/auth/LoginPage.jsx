@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { useAppDispatch, useAuth } from '../../store/hooks.js';
+import { useAppDispatch, useAuth, useIsAuthenticated } from '../../store/hooks.js';
 import { clearError } from '../../store/slices/authSlice.js';
 import { loginThunk } from '../../store/actions/authActions.js';
 import bgImage from '../../assets/images/sky_mmt.jpg';
@@ -14,7 +14,8 @@ import logo from '../../assets/images/mmtlogo.svg';
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isLoading, error } = useAuth();
+  const isAuthenticated = useIsAuthenticated();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});

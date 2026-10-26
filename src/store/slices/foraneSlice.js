@@ -6,6 +6,9 @@ import {
   updateForaneThunk,
 } from '../actions/foraneActions.js';
 
+import { clearAuth } from './authSlice.js';
+import { loginThunk } from '../actions/authActions.js';
+
 const initialState = {
   items: [],
   nameOptions: [], // {id, name, location}
@@ -21,6 +24,9 @@ const foraneSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
+      // Reset on session end so a failed/stale load doesn't block the next login
+      .addCase(clearAuth, () => initialState)
+      .addCase(loginThunk.fulfilled, () => initialState)
       .addCase(fetchForanesThunk.pending, state => {
         state.loading = true;
         state.error = null;

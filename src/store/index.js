@@ -22,6 +22,7 @@ import individualReducer from './slices/individualSlice.js';
 import yearFilterReducer from './slices/yearFilterSlice.js';
 import { setTokenAccessor, setUnauthorizedHandler } from '../api/api.js';
 import { clearAuth } from './slices/authSlice.js';
+import { isSessionValid, isTokenExpired } from '../utils/authSession.js';
 
 // Persist only auth slice (selected fields)
 const authPersistConfig = {
@@ -72,29 +73,36 @@ export const persistor = persistStore(store);
 setTokenAccessor(() => {
   const state = store.getState();
   const { accessToken, tokenExpiresAt, sessionUuid } = state.auth || {};
-  if (!accessToken) return { accessToken: null, sessionUuid: null };
-  if (tokenExpiresAt) {
-    const ms = Date.parse(tokenExpiresAt.replace(' ', 'T'));
-    if (!Number.isNaN(ms) && Date.now() >= ms) {
-      return { accessToken: null, sessionUuid: null };
-    }
+  if (!accessToken || isTokenExpired(tokenExpiresAt)) {
+    return { accessToken: null, sessionUuid: null };
   }
   return { accessToken, sessionUuid };
 });
 
 // Clear auth on unauthorized responses
-setUnauthorizedHandler(() => {
+setUnauthorizedHandler(usedToken => {
+  const auth = store.getState().auth;
+  const current = auth?.accessToken;
+  // Ignore late 401s from requests made with a previous/absent token (e.g. before a fresh login)
+  if (current && current !== usedToken && !isTokenExpired(auth.tokenExpiresAt)) {
+    return;
+  }
   // Dispatching directly avoids circular import issues
   store.dispatch(clearAuth());
 });
 
-// After rehydration, if a mock token slipped into persisted state, clear it
+// After rehydration, drop any persisted session that can no longer be used
+// (expired, mock token, or inconsistent flags) so routing never gets stuck.
+let rehydrationChecked = false;
 persistor.subscribe(() => {
   const { bootstrapped } = persistor.getState() || {};
-  if (!bootstrapped) return;
-  const state = store.getState();
-  const token = state?.auth?.accessToken;
-  if (typeof token === 'string' && token.startsWith('mock-jwt-token-')) {
+  if (!bootstrapped || rehydrationChecked) return;
+  rehydrationChecked = true;
+  const auth = store.getState()?.auth;
+  const hasStaleData = Boolean(
+    auth && (auth.isAuthenticated || auth.accessToken || auth.user)
+  );
+  if (hasStaleData && !isSessionValid(auth)) {
     store.dispatch(clearAuth());
   }
 });
