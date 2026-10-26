@@ -19,7 +19,7 @@ import React, { useState } from 'react';
 
   Behavior:
     - Prefills fields with initialData when provided (edit mode)
-    - Validates required fields & basic 10-digit contact number
+    - Validates required fields & (optional) 10-digit contact number
     - Calls onSubmit with raw formData object when valid
     - Calls onCancel when CANCEL pressed
 
@@ -75,13 +75,11 @@ const FamilyForm = ({
     } else if (!formData.community.trim()) {
       newErrors.community = 'Community is required';
     }
-    if (!formData.contactNumber.trim())
-      newErrors.contactNumber = 'Contact number is required';
     // Total amount validation removed per requirements
 
-    // Basic phone number validation (allow digits, spaces, dashes, parentheses but must result in 10 digits)
+    // Contact number is optional; when provided it must be a 10-digit number
     if (
-      formData.contactNumber &&
+      formData.contactNumber.trim() &&
       !/^\d{10}$/.test(formData.contactNumber.replace(/\D/g, ''))
     ) {
       newErrors.contactNumber = 'Enter a valid 10-digit number';
@@ -241,7 +239,7 @@ const FamilyForm = ({
 
                 <div className="flex-shrink-0">
                   <label className="text-blue-500 font-medium text-xs sm:text-sm mb-1 block">
-                    Contact Number*
+                    Contact Number
                   </label>
                   <input
                     type="tel"

@@ -157,7 +157,10 @@ function FamilyList() {
   }, [cid, selectedYear]);
 
   const filteredFamilies = useMemo(() => {
-    let result = families;
+    // Newest first (higher fam_id = created later)
+    let result = [...families].sort(
+      (a, b) => Number(b.id || 0) - Number(a.id || 0)
+    );
 
     // Apply letter filter
     if (selectedLetter) {
