@@ -158,7 +158,10 @@ const IndividualVisit = () => {
     <div style={{ paddingTop: headerOffset }}>
       <Header
         onSelect={() => {}}
-        headerInfo={{ title: 'Individual Details', subtitle: 'Visit' }}
+        headerInfo={{
+          title: 'Individual Details',
+          subtitle: 'View individual details and contributions',
+        }}
       />
       <div className="p-4 md:p-6">
         <div className="mb-4 flex items-center justify-between">

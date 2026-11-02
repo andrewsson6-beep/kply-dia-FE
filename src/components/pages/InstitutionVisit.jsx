@@ -176,7 +176,10 @@ const InstitutionVisit = () => {
       <div style={{ paddingTop: headerOffset }}>
         <Header
           onSelect={() => {}}
-          headerInfo={{ title: 'Institution Details', subtitle: 'Visit' }}
+          headerInfo={{
+            title: 'Institution Details',
+            subtitle: 'View institution details and contributions',
+          }}
         />
         <div className="p-4 md:p-6">
           <div className="mb-4 flex items-center justify-between">

@@ -42,6 +42,10 @@ const AddForane = () => {
   return (
     <div className="p-6 flex justify-center items-start w-full">
       <Header
+        headerInfo={{
+          title: 'Forane Management',
+          subtitle: 'Add a new forane',
+        }}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off

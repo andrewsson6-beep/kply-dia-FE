@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 // Import SVG logo (was incorrectly pointing to a non-existent PNG and using named import)
 import mmtlogo from '../../assets/images/mmtlogo.svg';
 import YearPicker from '../ui/YearPicker';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const Header = ({
   onSelect,
@@ -10,10 +11,15 @@ const Header = ({
   headerInfo,
   searchValue,
   onSearchChange,
-  selectedYear,
+  selectedYear: selectedYearProp,
   onYearChange,
-  showYearPicker = false,
+  showYearPicker = true,
 }) => {
+  // Falls back to the global year filter so every page shares the same selection
+  const { selectedYear: storeYear, setSelectedYear } = useYearFilter();
+  const selectedYear =
+    selectedYearProp !== undefined ? selectedYearProp : storeYear;
+  const handleYearChange = onYearChange || setSelectedYear;
   const [showAlphabet, setShowAlphabet] = useState(false);
   const [uncontrolledLetter, setUncontrolledLetter] = useState(null);
   const alphaContainerRef = useRef(null);
@@ -118,11 +124,13 @@ const Header = ({
         </div>
         <div className="order-2 flex-1 text-center min-w-[160px]">
           <div className="text-base sm:text-xl font-bold text-blue-600 leading-tight truncate px-2">
-            {headerInfo?.title || 'Header Title'}
+            {headerInfo?.title}
           </div>
-          <div className="text-xs sm:text-sm text-gray-600 truncate px-2">
-            {headerInfo?.subtitle || 'Subtitle or additional info'}
-          </div>
+          {headerInfo?.subtitle && (
+            <div className="text-xs sm:text-sm text-gray-600 truncate px-2">
+              {headerInfo.subtitle}
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-3 ml-auto relative order-3">
           {showFilter && (
@@ -150,7 +158,7 @@ const Header = ({
           {showYearPicker && (
             <YearPicker
               selectedYear={selectedYear}
-              onChange={onYearChange}
+              onChange={handleYearChange}
             />
           )}
           <div className="relative w-40 sm:w-56 md:w-64 border border-blue-400 rounded-md">

@@ -42,6 +42,15 @@ const ChurchForm = ({
     }
   }, [initialData, isEdit]);
 
+  // Drop a selected forane that is no longer offered (e.g. after the year changes)
+  useEffect(() => {
+    if (!showForaneField || foraneLoading || !formData.forane) return;
+    const stillAvailable = foraneOptions.some(
+      f => String(f.value ?? f) === String(formData.forane)
+    );
+    if (!stillAvailable) setFormData(prev => ({ ...prev, forane: '' }));
+  }, [showForaneField, foraneLoading, foraneOptions, formData.forane]);
+
   const cardStyle = {
     ...(height !== 'auto' && { height }),
     ...(width !== '100%' && { width }),

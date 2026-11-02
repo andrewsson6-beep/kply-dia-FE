@@ -126,7 +126,12 @@ const Dashboard = () => {
 
   return (
     <div className="relative min-h-full bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100">
-      <Header title="Dashboard" />
+      <Header
+        headerInfo={{
+          title: 'Dashboard',
+          subtitle: 'Overview of foranes, parishes, communities and contributions',
+        }}
+      />
       {/* Decorative background */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
         <div className="absolute top-[-10%] left-[5%] h-72 w-72 rounded-full bg-blue-300/10 blur-3xl" />

@@ -37,6 +37,10 @@ function AddInstitution() {
   return (
     <div>
       <Header
+        headerInfo={{
+          title: 'Institution Management',
+          subtitle: 'Add a new institution',
+        }}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off

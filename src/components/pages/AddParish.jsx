@@ -87,6 +87,10 @@ const AddParish = () => {
   return (
     <div className="p-6 flex justify-center items-start w-full">
       <Header
+        headerInfo={{
+          title: 'Parish Management',
+          subtitle: 'Add a new parish',
+        }}
         selectedLetter={selectedLetter}
         onSelect={ltr => {
           setSelectedLetter(ltr); // ltr will be null when toggled off

@@ -160,7 +160,10 @@ const CommunityDetails = () => {
     <div style={{ paddingTop: headerOffset }}>
       <Header
         onSelect={() => {}}
-        headerInfo={{ title: 'Community Details', subtitle: 'Overview' }}
+        headerInfo={{
+          title: 'Community Details',
+          subtitle: 'View community details and contributions',
+        }}
         showYearPicker={true}
         selectedYear={selectedYear}
         onYearChange={setSelectedYear}
