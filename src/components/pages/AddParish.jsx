@@ -1,31 +1,48 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ChurchForm from '../forms/ChurchForm';
 import Header from '../layout/Header';
-import { useAppDispatch, useAppSelector } from '../../store/hooks.js';
+import { useAppDispatch } from '../../store/hooks.js';
 import { fetchForanesThunk } from '../../store/actions/foraneActions.js';
 import {
   addParishThunk,
   fetchParishesThunk,
 } from '../../store/actions/parishActions.js';
 import { useNavigate } from 'react-router-dom';
+import useYearFilter from '../../hooks/useYearFilter.js';
 
 const AddParish = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const {
-    nameOptions,
-    loaded: foraneLoaded,
-    loading: foraneLoading,
-  } = useAppSelector(state => state.forane);
+  const { selectedYear } = useYearFilter();
+  const [nameOptions, setNameOptions] = useState([]);
+  const [foraneLoading, setForaneLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Ensure we have forane options for dropdown
+  // Options are kept in local state (not read from the shared store) so that
+  // foranes cached from another page/year are never shown before this
+  // year-filtered request completes.
   useEffect(() => {
-    if (!foraneLoaded && !foraneLoading) dispatch(fetchForanesThunk());
-  }, [foraneLoaded, foraneLoading, dispatch]);
+    let active = true;
+    setForaneLoading(true);
+    setNameOptions([]);
+    const request = dispatch(fetchForanesThunk(selectedYear || undefined));
+    request.then(action => {
+      if (!active) return;
+      if (fetchForanesThunk.fulfilled.match(action)) {
+        setNameOptions(action.payload?.options || []);
+      } else {
+        setError(action.payload || 'Failed to load foranes');
+      }
+      setForaneLoading(false);
+    });
+    return () => {
+      active = false;
+      request.abort();
+    };
+  }, [dispatch, selectedYear]);
 
   const foraneOptions = useMemo(
     () =>
@@ -93,6 +110,7 @@ const AddParish = () => {
           className="max-w-4xl mx-auto"
           showForaneField={true}
           foraneOptions={foraneOptions}
+          foraneLoading={foraneLoading}
         />
         {submitting && (
           <div className="mt-4 text-xs text-gray-500">Submitting...</div>
